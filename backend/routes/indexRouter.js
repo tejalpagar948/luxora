@@ -2,7 +2,7 @@ const express = require("express");
 const isLoggedin = require("../middleware/isLoggedin");
 const router = express.Router();
 
-router.get("/", (req, res) => {
+router.get("/", isLoggedin, (req, res) => {
     res.json({
         message: "Backend is running"
     });

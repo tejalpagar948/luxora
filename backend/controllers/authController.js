@@ -70,3 +70,25 @@ module.exports.loginUser = async (req, res) => {
         }
     })
 }
+
+module.exports.logoutUser = async (req, res) => {
+    const user = req.user
+    try {
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found",
+                error: "User not found"
+            })
+        }
+        res.clearCookie("token");
+        res.status(200).json({
+            message: "User Logged Out",
+            success: true
+        })
+    } catch (err) {
+        res.status(500).json({
+            message: "Error logging out user",
+            error: err.message
+        })
+    }
+}
