@@ -17,12 +17,15 @@ export const Login: React.FC = () => {
 
     try {
       const response = await loginUser(formData);
-
       console.log("response", response.data);
-
+      console.log("Before navigate");
       navigate("/");
+      console.log("After navigate");
     } catch (err) {
       console.log(err);
+      console.log(err.response);
+      console.log(err.response?.data);
+      console.log(err.response?.status);
     }
   };
 

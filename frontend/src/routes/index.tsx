@@ -3,6 +3,7 @@ import { createBrowserRouter, Outlet } from 'react-router-dom';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import { AdminSidebar } from '../components/layout/AdminSidebar';
+import ProtectedRoute from "../components/auth/ProtectedRoute";
 
 // Storefront Pages
 import { Home } from '../pages/storefront/Home';
@@ -44,16 +45,27 @@ const AdminLayout: React.FC = () => (
 
 export const router = createBrowserRouter([
   {
-    path: '/',
+    path: "/login",
+    element: <Login />,
+  },
+  {
+    path: "/register",
+    element: <Register />,
+  },
+  {
+    path: "/",
     element: <StorefrontLayout />,
     children: [
-      { index: true, element: <Home /> },
-      { path: 'collections', element: <Collections /> },
-      { path: 'products/:id', element: <ProductDetails /> },
-      { path: 'cart', element: <Cart /> },
-      { path: 'login', element: <Login /> },
-      { path: 'register', element: <Register /> },
-    ],
+      {
+        element: <ProtectedRoute />,
+        children: [
+          { index: true, element: <Home /> },
+          { path: "collections", element: <Collections /> },
+          { path: "products/:id", element: <ProductDetails /> },
+          { path: "cart", element: <Cart /> },
+        ],
+      },
+    ]
   },
   {
     path: '/admin',
