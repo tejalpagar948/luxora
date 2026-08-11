@@ -8,6 +8,7 @@ module.exports.registerUser = async (req, res) => {
         const user = await userModel.findOne({ email });
         if (user) {
             return res.status(400).json({
+                success: false,
                 message: "User already exists",
                 error: "User already exists"
             })
@@ -15,6 +16,7 @@ module.exports.registerUser = async (req, res) => {
         bcrypt.genSalt(12, (err, salt) => {
             if (err) {
                 return res.status(500).json({
+                    success: false,
                     message: "Error generating salt",
                     error: err.message
                 })
@@ -22,6 +24,7 @@ module.exports.registerUser = async (req, res) => {
             bcrypt.hash(password, salt, async (err, hash) => {
                 if (err) {
                     return res.status(500).json({
+                        success: false,
                         message: "Error hashing password",
                         error: err.message
                     })
@@ -30,6 +33,7 @@ module.exports.registerUser = async (req, res) => {
                 const token = generateToken(user);
                 res.cookie("token", token);
                 res.status(201).json({
+                    success: true,
                     message: "User Registered",
                 });
             })
@@ -37,6 +41,7 @@ module.exports.registerUser = async (req, res) => {
     } catch (error) {
         console.log(error);
         res.status(500).json({
+            success: false,
             message: "Error registering user",
             error: error.message
         });
@@ -49,6 +54,7 @@ module.exports.loginUser = async (req, res) => {
     let user = await userModel.findOne({ email: email })
     if (!user) {
         return res.status(404).json({
+            success: false,
             message: "User Not Found",
             error: "User Not Found"
         })
@@ -64,6 +70,7 @@ module.exports.loginUser = async (req, res) => {
             })
         } else {
             return res.status(404).json({
+                success: false,
                 message: "Invalid Credentials",
                 error: "Invalid Credentials"
             })
@@ -76,6 +83,7 @@ module.exports.logoutUser = async (req, res) => {
     try {
         if (!user) {
             return res.status(404).json({
+                success: false,
                 message: "User not found",
                 error: "User not found"
             })
@@ -87,6 +95,7 @@ module.exports.logoutUser = async (req, res) => {
         })
     } catch (err) {
         res.status(500).json({
+            success: false,
             message: "Error logging out user",
             error: err.message
         })
