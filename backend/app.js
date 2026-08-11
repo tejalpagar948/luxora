@@ -7,10 +7,12 @@ const ownersRouter = require('./routes/ownersRouter');
 const productsRouter = require('./routes/productsRouter');
 const usersRouter = require('./routes/usersRouter');
 const indexRouter = require('./routes/indexRouter');
+const cartRouter = require('./routes/cartRouter');
 const flash = require("connect-flash");
 const expressSession = require("express-session");
 const ejs = require("ejs");
 const cors = require("cors");
+const isLoggedin = require('./middleware/isLoggedin');
 
 // Express App Initialization
 const app = express();
@@ -38,6 +40,7 @@ app.use("/", indexRouter);
 app.use("/owners", ownersRouter)
 app.use("/products", productsRouter)
 app.use("/users", usersRouter)
+app.use("/cart", isLoggedin, cartRouter)
 
 
 // Enable Simple Inline CORS for frontend connection
