@@ -5,16 +5,18 @@ import { Button } from '../../components/ui/Button';
 import { FormField } from '../../components/forms/FormField';
 import { Link } from 'react-router-dom';
 import { registerUser } from "../../../services/authService";
+import { toast } from 'react-hot-toast';
 
 export const Register: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const res = await registerUser(formData);
-
       console.log(res.data);
-    } catch (error) {
+      toast.success(res.data.message);
+    } catch (error: any) {
       console.log(error);
+      toast.error(error.response?.data?.message || "Something went wrong");
     }
   };
 
