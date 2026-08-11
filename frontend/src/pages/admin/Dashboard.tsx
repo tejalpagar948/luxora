@@ -15,7 +15,7 @@ export const Dashboard: React.FC = () => {
   useEffect(() => {
     const checkBackendHealth = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/v1/health');
+        const response = await fetch('http://localhost:3000/health');
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -24,12 +24,12 @@ export const Dashboard: React.FC = () => {
         setBackendStatus('online');
       } catch (err: any) {
         setBackendStatus('offline');
-        setErrorDetails(err.message || 'Could not connect to localhost:5000');
+        setErrorDetails(err.message || 'Could not connect to localhost:3000');
       }
     };
 
     checkBackendHealth();
-    
+
     const interval = setInterval(checkBackendHealth, 10000);
     return () => clearInterval(interval);
   }, []);
@@ -38,12 +38,12 @@ export const Dashboard: React.FC = () => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     const s = Math.floor(seconds % 60);
-    
+
     const parts = [];
     if (h > 0) parts.push(`${h}h`);
     if (m > 0) parts.push(`${m}m`);
     parts.push(`${s}s`);
-    
+
     return parts.join(' ');
   };
 
@@ -106,7 +106,7 @@ export const Dashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-background-alt p-4 rounded-md">
             <span className="block text-xs text-neutral-400 uppercase tracking-wider mb-1">Backend API URL</span>
-            <span className="text-sm font-semibold text-primary break-all">http://localhost:5000/api/v1/health</span>
+            <span className="text-sm font-semibold text-primary break-all">http://localhost:3000/health</span>
           </div>
           <div className="bg-background-alt p-4 rounded-md">
             <span className="block text-xs text-neutral-400 uppercase tracking-wider mb-1">Database Status</span>
@@ -130,7 +130,7 @@ export const Dashboard: React.FC = () => {
             <div className="bg-red-50/50 p-4 rounded-md border border-red-100 col-span-1 md:col-span-2">
               <span className="block text-xs text-red-700 uppercase tracking-wider mb-1">Diagnostics Error</span>
               <span className="text-sm font-semibold text-red-600">
-                {errorDetails}. Start the backend server on port 5000 to verify connection.
+                {errorDetails}. Start the backend server on port 3000 to verify connection.
               </span>
             </div>
           )}
