@@ -1,0 +1,170 @@
+[
+    {
+        "title": "Aurora Noir Shoulder Bag",
+        "description": "Crafted in supple black leather with a sculpted top handle and polished gold-tone twist lock, the Aurora Noir Shoulder Bag brings effortless refinement to everyday carry. A detachable crossbody strap offers versatile styling from desk to dinner.",
+        "category": "Handbag",
+        "price": 289.00,
+        "stock": 18,
+        "image": ""
+    },
+    {
+        "title": "Belle Quilted Chain Flap Bag",
+        "description": "Finished in chevron-quilted black leather, the Belle Quilted Chain Flap Bag pairs a signature gold turn-lock with an interwoven leather-and-chain strap for a look of timeless glamour, day or night.",
+        "category": "Crossbody Bag",
+        "price": 245.00,
+        "stock": 22,
+        "image": ""
+    },
+    {
+        "title": "Heritage Monogram Key Pouch",
+        "description": "A refined accessory in rich monogram-coated canvas, the Heritage Monogram Key Pouch features a gold-tone clasp and detachable key ring, making it the perfect companion for keys, coins, and small essentials.",
+        "category": "Key Pouch",
+        "price": 95.00,
+        "stock": 30,
+        "image": ""
+    },
+    {
+        "title": "Diamond Chevron Chain Bag",
+        "description": "Distinguished by its diamond-stitched leather silhouette and gleaming gold hardware, the Diamond Chevron Chain Bag combines a structured flap closure with a versatile chain-link strap for polished, all-day elegance.",
+        "category": "Crossbody Bag",
+        "price": 259.00,
+        "stock": 16,
+        "image": ""
+    },
+    {
+        "title": "Étoile Draped Satin Clutch",
+        "description": "Wrapped in lustrous pleated satin and finished with a crystal-embellished clasp, the Étoile Draped Satin Clutch is an evening statement piece, complete with a slender gold chain for hands-free glamour.",
+        "category": "Clutch",
+        "price": 210.00,
+        "stock": 14,
+        "image": ""
+    },
+    {
+        "title": "Heritage Monogram Cosmetic Case",
+        "description": "Domed and structured in signature monogram-coated canvas, the Heritage Monogram Cosmetic Case offers a spacious interior and smooth gold-tone zip, ideal for organizing beauty essentials in style.",
+        "category": "Cosmetic Pouch",
+        "price": 129.00,
+        "stock": 25,
+        "image": ""
+    },
+    {
+        "title": "Imperial Cognac Leather Tote",
+        "description": "Rendered in rich cognac leather with a structured silhouette, the Imperial Cognac Leather Tote features dual rolled handles, a gold twist lock, and a removable strap for a look of understated luxury.",
+        "category": "Handbag",
+        "price": 315.00,
+        "stock": 17,
+        "image": ""
+    },
+    {
+        "title": "Prestige Saffiano Travel Duffel",
+        "description": "Designed for the discerning traveler, the Prestige Saffiano Travel Duffel is crafted from textured black leather with brass-toned hardware, a monogrammed luggage tag, and a padded adjustable strap for effortless journeys.",
+        "category": "Duffel Bag",
+        "price": 425.00,
+        "stock": 12,
+        "image": ""
+    },
+    {
+        "title": "Luna Taupe Box Crossbody",
+        "description": "Minimalist and refined, the Luna Taupe Box Crossbody is crafted in smooth taupe leather with a structured boxy form, gold-tone hardware, and an adjustable strap engraved with subtle signature detailing.",
+        "category": "Crossbody Bag",
+        "price": 195.00,
+        "stock": 27,
+        "image": ""
+    },
+    {
+        "title": "Luna Heritage Canvas Tote",
+        "description": "Blending ivory canvas with warm cognac leather trim, the Luna Heritage Canvas Tote features a brass nameplate and matching luggage tag, delivering understated luxury for work or weekend.",
+        "category": "Tote Bag",
+        "price": 265.00,
+        "stock": 20,
+        "image": ""
+    },
+    {
+        "title": "Signature Bifold Leather Wallet",
+        "description": "Crafted from pebbled leather with contrast stitching and a polished gold emblem, the Signature Bifold Leather Wallet offers a slim, sophisticated profile with ample card and bill storage.",
+        "category": "Wallet",
+        "price": 135.00,
+        "stock": 28,
+        "image": ""
+    },
+    {
+        "title": "Milano Cognac Leather Tote",
+        "description": "The Milano Cognac Leather Tote showcases a clean, structured shape in rich cognac leather, finished with rolled top handles and a subtle gold emblem for everyday sophistication.",
+        "category": "Tote Bag",
+        "price": 275.00,
+        "stock": 19,
+        "image": ""
+    },
+    {
+        "title": "Monaco Top-Handle Saddle Bag",
+        "description": "The Monaco Top-Handle Saddle Bag pairs a rounded top handle with a structured saddle silhouette in warm tan leather, secured by a gold-tone twist lock and finished with a matching crossbody strap.",
+        "category": "Crossbody Bag",
+        "price": 255.00,
+        "stock": 21,
+        "image": ""
+    },
+    {
+        "title": "Pearl Noir Quilted Evening Bag",
+        "description": "Adorned with hand-set pearls and a crystal clasp, the Pearl Noir Quilted Evening Bag brings diamond-quilted texture and a delicate gold chain strap to the most elegant occasions.",
+        "category": "Clutch",
+        "price": 235.00,
+        "stock": 13,
+        "image": ""
+    },
+    {
+        "title": "Noir Signature Leather Tote",
+        "description": "Sleek and versatile, the Noir Signature Leather Tote is crafted in smooth black leather with rolled handles and a subtle gold emblem, offering a polished silhouette suited to any occasion.",
+        "category": "Tote Bag",
+        "price": 285.00,
+        "stock": 20,
+        "image": ""
+    },
+    {
+        "title": "Voyager Classic Weekender Duffel",
+        "description": "Built for effortless travel, the Voyager Classic Weekender Duffel combines heathered canvas with rich leather trim, a front zip pocket, and an engraved luggage tag for refined journeys.",
+        "category": "Duffel Bag",
+        "price": 395.00,
+        "stock": 11,
+        "image": ""
+    },
+    {
+        "title": "Royal Crest Canvas Tote",
+        "description": "Finished with a woven crest emblem and contrast navy handles, the Royal Crest Canvas Tote combines durable canvas construction with a leather-trimmed base for polished, everyday versatility.",
+        "category": "Tote Bag",
+        "price": 175.00,
+        "stock": 24,
+        "image": ""
+    },
+    {
+        "title": "Heritage Monogram Passport Holder",
+        "description": "Slim and refined, the Heritage Monogram Passport Holder is crafted from signature monogram-coated canvas with leather trim and a gold emblem, protecting travel documents in timeless style.",
+        "category": "Passport Holder",
+        "price": 85.00,
+        "stock": 29,
+        "image": ""
+    },
+    {
+        "title": "Velvet Cognac Structured Satchel",
+        "description": "The Velvet Cognac Structured Satchel is crafted in smooth chocolate leather with dual rolled handles, a gold twist lock, and a removable strap, offering timeless structure for work or travel.",
+        "category": "Handbag",
+        "price": 305.00,
+        "stock": 15,
+        "image": ""
+    },
+    {
+        "title": "Victoria Ivory Top-Handle Satchel",
+        "description": "Elegant and refined, the Victoria Ivory Top-Handle Satchel features a rounded handle, gold twist lock, and adjustable crossbody strap, crafted in soft ivory leather for versatile luxury.",
+        "category": "Satchel",
+        "price": 260.00,
+        "stock": 18,
+        "image": ""
+    },
+    {
+        "title": "Voyager Classic Leather Duffel",
+        "description": "The Voyager Classic Leather Duffel is crafted in rich espresso leather with brass hardware and a signature embossed patch, offering a spacious, durable companion for weekend escapes.",
+        "category": "Duffel Bag",
+        "price": 415.00,
+        "stock": 10,
+        "image": ""
+    }
+]
