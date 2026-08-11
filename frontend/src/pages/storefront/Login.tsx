@@ -4,28 +4,31 @@ import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { FormField } from '../../components/forms/FormField';
 import { Link } from 'react-router-dom';
-import { loginUser } from '../../../services/authService';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
+import { useAuth } from '../../context/AuthContext';
 
 export const Login: React.FC = () => {
   const [formData, setFormData] = useState({ email: "", password: "" })
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     console.log("njanwsjhqa", formData);
     e.preventDefault();
 
     try {
-      const response = await loginUser(formData);
-      console.log("response", response.data);
-      console.log("Before navigate");
-      navigate("/");
-      console.log("After navigate");
-    } catch (err) {
+      const response = await login(formData);
+      toast.success(response.data.message);
+      const from = location.state?.from || "/";
+      navigate(from, { replace: true });
+    } catch (err: any) {
       console.log(err);
       console.log(err.response);
       console.log(err.response?.data);
       console.log(err.response?.status);
+      toast.error(err.response?.data?.message || "Something went wrong");
     }
   };
 
