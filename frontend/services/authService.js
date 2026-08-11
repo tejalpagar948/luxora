@@ -11,3 +11,7 @@ export const loginUser = (userData) => {
 export const logoutUser = () => {
     return api.get("/users/logout");
 };
+
+export const getUserProfile = () => {
+    return api.get("/users/profile");
+};
