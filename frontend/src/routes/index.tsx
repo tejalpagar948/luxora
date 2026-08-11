@@ -4,6 +4,8 @@ import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import { AdminSidebar } from '../components/layout/AdminSidebar';
 import ProtectedRoute from "../components/auth/ProtectedRoute";
+import { AdminLogin } from '../pages/admin/AdminLogin';
+import AdminProtectedRoute from '../components/auth/AdminProtectedRoute';
 
 // Storefront Pages
 import { Home } from '../pages/storefront/Home';
@@ -54,6 +56,10 @@ export const router = createBrowserRouter([
     element: <Register />,
   },
   {
+    path: "/admin/login",
+    element: <AdminLogin />,
+  },
+  {
     path: "/",
     element: <StorefrontLayout />,
     children: [
@@ -76,12 +82,17 @@ export const router = createBrowserRouter([
   },
   {
     path: '/admin',
-    element: <AdminLayout />,
+    element: <AdminProtectedRoute />,
     children: [
-      { index: true, element: <Dashboard /> },
-      { path: 'products', element: <ProductManagement /> },
-      { path: 'products/new', element: <CreateProduct /> },
-      { path: 'products/:id/edit', element: <EditProduct /> },
+      {
+        element: <AdminLayout />,
+        children: [
+          { index: true, element: <Dashboard /> },
+          { path: 'products', element: <ProductManagement /> },
+          { path: 'products/new', element: <CreateProduct /> },
+          { path: 'products/:id/edit', element: <EditProduct /> },
+        ],
+      }
     ],
   },
 ]);
