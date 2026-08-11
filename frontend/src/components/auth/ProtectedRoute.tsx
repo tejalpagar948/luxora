@@ -1,32 +1,20 @@
-import React, { useEffect, useState } from "react";
-import { Navigate, Outlet } from "react-router-dom";
-import api from "../../../services/api";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 const ProtectedRoute = () => {
-    const [loading, setLoading] = useState(true);
-    const [isAuth, setIsAuth] = useState(false);
-
-    useEffect(() => {
-        const checkAuth = async () => {
-            try {
-                await api.get("/"); // Existing protected backend route
-                setIsAuth(true);
-            } catch (error) {
-                setIsAuth(false);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        checkAuth();
-    }, []);
+    const { isAuthenticated, loading } = useAuth();
+    const location = useLocation();
 
     if (loading) {
-        return <div>Loading...</div>;
+        return (
+            <div className="w-full min-h-screen flex items-center justify-center bg-background">
+                <p className="font-body text-neutral-400">Loading...</p>
+            </div>
+        );
     }
 
-    if (!isAuth) {
-        return <Navigate to="/login" replace />;
+    if (!isAuthenticated) {
+        return <Navigate to="/login" state={{ from: location.pathname }} replace />;
     }
 
     return <Outlet />;
