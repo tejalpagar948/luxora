@@ -10,7 +10,10 @@ if (process.env.NODE_ENV == "development") {
   router.post("/create", async (req, res) => {
     let owners = await ownerModel.find()
     if (owners.length > 0) {
-      return res.status(503).send("You dont have permission to create owner")
+      return res.status(503).json({
+        success: false,
+        message: "You dont have permission to create owner"
+      });
     }
     let { fullName, username, email, password, picture, products, gstin } = req.body;
     let user = await ownerModel.create({
@@ -24,4 +27,9 @@ if (process.env.NODE_ENV == "development") {
     return res.status(201).json({ success: true, message: "Owner created successfully", user })
   });
 }
+
+router.get("/admin", (req, res) => {
+  res.send("Owner Router");
+});
+
 module.exports = router;
