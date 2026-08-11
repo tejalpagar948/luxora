@@ -7,17 +7,17 @@ export const Navbar: React.FC = () => {
 
   const links = isAdmin
     ? [
-        { name: 'Dashboard', path: '/admin' },
-        { name: 'Products', path: '/admin/products' },
-        { name: 'Create Product', path: '/admin/products/new' },
-        { name: 'Storefront', path: '/' },
-      ]
+      { name: 'Dashboard', path: '/admin' },
+      { name: 'Products', path: '/admin/products' },
+      { name: 'Create Product', path: '/admin/products/new' },
+      { name: 'Storefront', path: '/' },
+    ]
     : [
-        { name: 'Home', path: '/' },
-        { name: 'Collections', path: '/collections' },
-        { name: 'Cart', path: '/cart' },
-        { name: 'Admin', path: '/admin' },
-      ];
+      { name: 'Home', path: '/' },
+      { name: 'Collections', path: '/collections' },
+      { name: 'Cart', path: '/cart' },
+      // { name: 'Admin', path: '/admin' },
+    ];
 
   return (
     <nav className="flex space-x-8 font-body text-label-caps">
@@ -27,9 +27,8 @@ export const Navbar: React.FC = () => {
           <Link
             key={link.name}
             to={link.path}
-            className={`uppercase tracking-widest text-[12px] hover:text-accent transition-colors duration-200 py-1 relative ${
-              isActive ? 'text-accent' : 'text-primary'
-            }`}
+            className={`uppercase tracking-widest text-[12px] hover:text-accent transition-colors duration-200 py-1 relative ${isActive ? 'text-accent' : 'text-primary'
+              }`}
           >
             {link.name}
             {isActive && (
