@@ -12,6 +12,7 @@ import { ProductDetails } from '../pages/storefront/ProductDetails';
 import { Cart } from '../pages/storefront/Cart';
 import { Login } from '../pages/storefront/Login';
 import { Register } from '../pages/storefront/Register';
+import { Profile } from '../pages/storefront/Profile';
 
 // Admin Pages
 import { Dashboard } from '../pages/admin/Dashboard';
@@ -56,13 +57,19 @@ export const router = createBrowserRouter([
     path: "/",
     element: <StorefrontLayout />,
     children: [
+      { index: true, element: <Home /> },
+      {
+        path: "collections",
+        children: [
+          { index: true, element: <Collections /> },
+          { path: '/collections/:product_id', element: <ProductDetails /> }
+        ]
+      },
       {
         element: <ProtectedRoute />,
         children: [
-          { index: true, element: <Home /> },
-          { path: "collections", element: <Collections /> },
-          { path: "products/:id", element: <ProductDetails /> },
-          { path: "cart", element: <Cart /> },
+          { path: "/cart", element: <Cart /> },
+          { path: "/profile", element: <Profile /> },
         ],
       },
     ]
