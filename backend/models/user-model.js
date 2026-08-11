@@ -12,10 +12,19 @@ const UserSchema = mongoose.Schema({
     mobile: Number,
     isAdmin: Boolean,
     picture: String,
-    cart: {
-        type: Array,
-        default: []
-    },
+    cart: [
+        {
+            product: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "product",
+                required: true
+            },
+            quantity: {
+                type: Number,
+                default: 1
+            }
+        }
+    ],
     orders: {
         type: Array,
         default: []
