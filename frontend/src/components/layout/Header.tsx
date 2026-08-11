@@ -2,14 +2,16 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Navbar } from './Navbar';
 import { Container } from './Container';
-import { logoutUser } from '../../../services/authService';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
+import { useAuth } from '../../context/AuthContext';
 
 export const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
   const isAdmin = location.pathname.startsWith('/admin');
   const navigate = useNavigate();
+  const { isAuthenticated, logout } = useAuth();
 
   const links = isAdmin
     ? [
@@ -27,10 +29,12 @@ export const Header: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      const response = await logoutUser();
+      await logout();
+      toast.success("Logged out successfully");
       navigate("/login");
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
+      toast.error(error.response?.data?.message || "Something went wrong");
     }
   }
 
@@ -57,17 +61,29 @@ export const Header: React.FC = () => {
 
         {/* Action Elements */}
         <div className="flex items-center space-x-4 md:space-x-6 font-body text-label-caps">
-          <button
-            onClick={handleLogout}
-            className="text-primary hover:text-accent transition-colors duration-200 text-xs md:text-sm"
-          >
-            Logout
-          </button>
-          <Link to="/cart" className="relative p-1 text-xs md:text-sm">
-            <span className="text-primary hover:text-accent transition-colors duration-200 uppercase tracking-widest">
-              Cart (0)
-            </span>
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <Link
+                to="/profile"
+                className="text-primary hover:text-accent transition-colors duration-200 text-xs md:text-xm uppercase tracking-widest"
+              >
+                Profile
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="text-primary hover:text-accent transition-colors duration-200 text-xs md:text-xm uppercase tracking-widest cursor-pointer"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <Link
+              to="/login"
+              className="text-primary hover:text-accent transition-colors duration-200 text-xs md:text-xm uppercase tracking-widest"
+            >
+              Login
+            </Link>
+          )}
         </div>
 
         {/* Mobile Navigation Drawer Dropdown */}
