@@ -15,4 +15,11 @@ router.post("/login", loginUser)
 
 router.get("/logout", isLoggedIn, logoutUser);
 
+router.get("/profile", isLoggedIn, (req, res) => {
+    res.status(200).json({
+        success: true,
+        data: req.user
+    });
+});
+
 module.exports = router;
