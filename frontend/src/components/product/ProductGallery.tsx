@@ -9,7 +9,7 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({ images }) => {
 
   if (!images.length) {
     return (
-      <div className="aspect-[4/5] bg-background-alt rounded-lg flex items-center justify-center font-body text-neutral-400">
+      <div className="aspect-[4/4] bg-background-alt rounded-lg flex items-center justify-center font-body text-neutral-400">
         No images available
       </div>
     );
@@ -23,7 +23,7 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({ images }) => {
           <button
             key={idx}
             onClick={() => setActiveImage(image)}
-            className={`w-20 aspect-[4/5] overflow-hidden bg-background-alt rounded-md border flex-shrink-0 transition-colors duration-200 ${activeImage === image ? 'border-accent' : 'border-border-light hover:border-primary'
+            className={`w-20 aspect-[4/4] overflow-hidden bg-background-alt rounded-md border flex-shrink-0 transition-colors duration-200 ${activeImage === image ? 'border-accent' : 'border-border-light hover:border-primary'
               }`}
           >
             <img src={image} alt={`Thumbnail ${idx + 1}`} className="object-cover w-full h-full" />

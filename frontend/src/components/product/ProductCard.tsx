@@ -79,7 +79,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
     <div className="group flex flex-col bg-background rounded-lg overflow-hidden transition-all duration-300 hover:shadow-lg">
       {/* Product Image Wrapper */}
-      <Link to={`/collections/${product._id}`} className="relative block aspect-[4/5] overflow-hidden bg-neutral-50 rounded-lg">
+      <Link to={`/collections/${product._id}`} className="relative block aspect-[4/4] overflow-hidden bg-neutral-50 rounded-lg">
         {product.tag && (
           <span className="absolute top-3 left-3 z-10 bg-accent text-[#121212] font-body text-[8px] sm:text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 sm:py-1 rounded-md shadow-sm">
             {product.tag}
