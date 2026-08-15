@@ -1,8 +1,10 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 export const Navbar: React.FC = () => {
   const location = useLocation();
+  const { user } = useAuth();
   const isAdmin = location.pathname.startsWith('/admin');
 
   const links = isAdmin
@@ -15,8 +17,9 @@ export const Navbar: React.FC = () => {
     : [
       { name: 'Home', path: '/' },
       { name: 'Collections', path: '/collections' },
-      { name: 'Cart', path: '/cart' },
-      // { name: 'Admin', path: '/admin' },
+      ...(user?.isAdmin
+        ? [{ name: 'Admin', path: '/admin' }]
+        : [{ name: 'Cart', path: '/cart' }])
     ];
 
   return (

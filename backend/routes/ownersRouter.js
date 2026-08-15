@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const ownerModel = require("../models/owners-model");
+const isAdmin = require("../middleware/isAdmin");
 
 router.get("/", (req, res) => {
   res.send("Owner Router");
@@ -28,7 +29,7 @@ if (process.env.NODE_ENV == "development") {
   });
 }
 
-router.get("/admin", (req, res) => {
+router.get("/admin", isAdmin, (req, res) => {
   res.send("Owner Router");
 });
 
