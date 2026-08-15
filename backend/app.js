@@ -8,6 +8,7 @@ const productsRouter = require('./routes/productsRouter');
 const usersRouter = require('./routes/usersRouter');
 const indexRouter = require('./routes/indexRouter');
 const cartRouter = require('./routes/cartRouter');
+const wishlistRouter = require('./routes/wishlistRouter');
 const flash = require("connect-flash");
 const expressSession = require("express-session");
 const ejs = require("ejs");
@@ -41,6 +42,7 @@ app.use("/owners", ownersRouter)
 app.use("/products", productsRouter)
 app.use("/users", usersRouter)
 app.use("/cart", isLoggedin, cartRouter)
+app.use("/wishlist", wishlistRouter)
 
 
 // Enable Simple Inline CORS for frontend connection

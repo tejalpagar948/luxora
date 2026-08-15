@@ -1,9 +1,65 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import { Container } from '../../components/layout/Container';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../context/AuthContext';
+import { getWishlist, removeFromWishlist } from '../../../services/wishlistService';
+
 export const Profile: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<'orders' | 'wishlist'>('orders');
+  const [wishlist, setWishlist] = useState<any[]>([]);
+  const [wishlistLoading, setWishlistLoading] = useState<boolean>(false);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success('Logged out successfully');
+      navigate('/login');
+    } catch (error: any) {
+      console.error(error);
+      toast.error(
+        error.response?.data?.message || 'Something went wrong'
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchWishlist();
+    }
+  }, [user]);
+
+  const fetchWishlist = async () => {
+    setWishlistLoading(true);
+    try {
+      const res = await getWishlist();
+      if (res.data.success) {
+        setWishlist(res.data.wishlist || res.data.data || []);
+      }
+    } catch (err) {
+      console.error("Error fetching wishlist:", err);
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
+
+  const handleRemoveFromWishlist = async (productId: string) => {
+    try {
+      const res = await removeFromWishlist(productId);
+      if (res.data.success) {
+        setWishlist(res.data.wishlist || res.data.data || []);
+        toast.success("Product removed from wishlist");
+      } else {
+        toast.error(res.data.message || "Failed to remove product");
+      }
+    } catch (err: any) {
+      console.error("Error removing product from wishlist:", err);
+      toast.error(err.response?.data?.message || "Failed to remove product");
+    }
+  };
 
   if (loading) {
     return (
@@ -56,6 +112,16 @@ export const Profile: React.FC = () => {
                 </span>
               </div>
             </div>
+            {/* Logout button */}
+            <div className="flex-shrink-0 mt-4 md:mt-0">
+              <Button
+                variant="outline"
+                className="border-red-200 hover:bg-red-50 hover:text-red-600 text-red-500 hover:border-red-600 !py-2.5 !px-5 text-xs font-semibold"
+                onClick={handleLogout}
+              >
+                Log Out
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
@@ -82,28 +148,88 @@ export const Profile: React.FC = () => {
               </div>
             </div>
 
-            {/* Right section: Orders details */}
+            {/* Right section: Tabs for Order History and Wishlist */}
             <div className="md:col-span-7">
-              <h2 className="font-display text-headline-xs text-primary mb-6 font-semibold">
-                Order History
-              </h2>
-              {user.orders && user.orders.length > 0 ? (
-                <div className="space-y-4">
-                  {user.orders.map((order: any, idx: number) => (
-                    <div key={idx} className="border border-border-light rounded-lg p-4 bg-background-alt flex justify-between items-center">
-                      <div>
-                        <p className="text-sm font-semibold text-primary">Order #{order._id || idx + 1}</p>
-                        <p className="text-xs text-neutral-400">{new Date(order.createdAt).toLocaleDateString()}</p>
+              <div className="flex border-b border-border-light mb-6">
+                <button
+                  onClick={() => setActiveTab('orders')}
+                  className={`pb-4 px-4 font-display text-[18px] font-semibold border-b-2 transition-colors duration-200 cursor-pointer ${activeTab === 'orders'
+                    ? 'border-accent text-accent'
+                    : 'border-transparent text-neutral-400 hover:text-primary'
+                    }`}
+                >
+                  Order History ({user.orders ? user.orders.length : 0})
+                </button>
+                <button
+                  onClick={() => setActiveTab('wishlist')}
+                  className={`pb-4 px-4 font-display text-[18px] font-semibold border-b-2 transition-colors duration-200 cursor-pointer ${activeTab === 'wishlist'
+                    ? 'border-accent text-accent'
+                    : 'border-transparent text-neutral-400 hover:text-primary'
+                    }`}
+                >
+                  My Wishlist ({wishlist.length})
+                </button>
+              </div>
+
+              {activeTab === 'orders' ? (
+                user.orders && user.orders.length > 0 ? (
+                  <div className="space-y-4">
+                    {user.orders.map((order: any, idx: number) => (
+                      <div key={idx} className="border border-border-light rounded-lg p-4 bg-background-alt flex justify-between items-center">
+                        <div>
+                          <p className="text-sm font-semibold text-primary">Order #{order._id || idx + 1}</p>
+                          <p className="text-xs text-neutral-400">{new Date(order.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        <span className="text-sm font-medium text-accent">${order.totalAmount}</span>
                       </div>
-                      <span className="text-sm font-medium text-accent">${order.totalAmount}</span>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-12 text-center border border-dashed border-border-light rounded-lg bg-background-alt flex flex-col items-center justify-center">
+                    <span className="text-2xl mb-2">📦</span>
+                    <p className="text-sm text-neutral-500">No orders found.</p>
+                  </div>
+                )
               ) : (
-                <div className="py-12 text-center border border-dashed border-border-light rounded-lg bg-background-alt flex flex-col items-center justify-center">
-                  <span className="text-2xl mb-2">📦</span>
-                  <p className="text-sm text-neutral-500">No orders found.</p>
-                </div>
+                wishlistLoading ? (
+                  <div className="py-12 text-center">
+                    <p className="text-sm text-neutral-400">Loading wishlist...</p>
+                  </div>
+                ) : wishlist.length > 0 ? (
+                  <div className="space-y-4">
+                    {wishlist.map((product: any) => (
+                      <div key={product._id} className="border border-border-light rounded-lg p-4 bg-background-alt flex items-center gap-4">
+                        <div className="w-16 h-16 rounded overflow-hidden bg-neutral-100 flex-shrink-0">
+                          <img src={product.image || 'https://via.placeholder.com/150'} alt={product.title} className="w-full h-full object-cover" />
+                        </div>
+                        <div className="flex-grow min-w-0">
+                          <Link to={`/collections/${product._id}`} className="text-sm font-semibold text-primary hover:text-accent truncate block">
+                            {product.title}
+                          </Link>
+                          <p className="text-xs text-neutral-400 capitalize">{product.category}</p>
+                          <p className="text-sm font-medium text-accent mt-1">${product.price}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Link to={`/collections/${product._id}`}>
+                            <Button variant="outline" className="!py-1.5 !px-1.5 text-[10px] uppercase tracking-wider font-semibold font-body rounded-md">View</Button>
+                          </Link>
+                          <Button
+                            variant="outline"
+                            className="!py-1.5 !px-1.5 text-[10px] uppercase tracking-wider font-semibold font-body rounded-md border-red-200 hover:bg-red-50 hover:text-red-600 text-red-500 hover:border-red-600"
+                            onClick={() => handleRemoveFromWishlist(product._id)}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-12 text-center border border-dashed border-border-light rounded-lg bg-background-alt flex flex-col items-center justify-center">
+                    <span className="text-2xl mb-2">❤️</span>
+                    <p className="text-sm text-neutral-500">Your wishlist is empty.</p>
+                  </div>
+                )
               )}
             </div>
           </div>

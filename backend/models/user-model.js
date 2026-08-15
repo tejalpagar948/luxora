@@ -10,7 +10,10 @@ const UserSchema = mongoose.Schema({
     password: String,
     email: String,
     mobile: Number,
-    isAdmin: Boolean,
+    isAdmin: {
+        type: Boolean,
+        default: false
+    },
     picture: String,
     cart: [
         {
@@ -23,6 +26,12 @@ const UserSchema = mongoose.Schema({
                 type: Number,
                 default: 1
             }
+        }
+    ],
+    wishlist: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Product"
         }
     ],
     orders: {

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import { Container } from '../../components/layout/Container';
 import { ProductGallery } from '../../components/product/ProductGallery';
 import { Button } from '../../components/ui/Button';
 import { getSingleProduct } from '../../../services/productService';
+import { getWishlist, addToWishlist, removeFromWishlist } from '../../../services/wishlistService';
 import { useCart } from '../../hooks/useCart';
 import { useAuth } from '../../context/AuthContext';
 import { redirectToLogin } from '../../../utils/redirectToLogin';
@@ -87,7 +89,62 @@ export const ProductDetails: React.FC = () => {
   const cartItem = cart.find((item) => item.product._id === product_id);
   const isAddedToCart = !!cartItem;
   const cartQuantity = cartItem ? cartItem.quantity : 0;
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+
+  useEffect(() => {
+    const checkWishlist = async () => {
+      if (isAuthenticated && product_id) {
+        try {
+          const res = await getWishlist();
+          if (res.data.success) {
+            const list = res.data.wishlist || res.data.data || [];
+            const exists = list.some((item: any) => item._id === product_id || item === product_id);
+            setIsInWishlist(exists);
+          }
+        } catch (err) {
+          console.error("Error checking wishlist:", err);
+        }
+      }
+    };
+    checkWishlist();
+  }, [product_id, isAuthenticated]);
+
+  const handleWishlistToggle = async () => {
+    if (!isAuthenticated) {
+      redirectToLogin(navigate, location.pathname);
+      return;
+    }
+    if (!product_id) return;
+    
+    setWishlistLoading(true);
+    try {
+      if (isInWishlist) {
+        const res = await removeFromWishlist(product_id);
+        if (res.data.success) {
+          setIsInWishlist(false);
+          toast.success("Removed from wishlist");
+        } else {
+          toast.error(res.data.message || "Failed to update wishlist");
+        }
+      } else {
+        const res = await addToWishlist(product_id);
+        if (res.data.success) {
+          setIsInWishlist(true);
+          toast.success("Added to wishlist");
+        } else {
+          toast.error(res.data.message || "Failed to update wishlist");
+        }
+      }
+    } catch (err: any) {
+      console.error("Wishlist toggle error:", err);
+      toast.error(err.response?.data?.message || "Failed to update wishlist");
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -110,7 +167,6 @@ export const ProductDetails: React.FC = () => {
       redirectToLogin(navigate, location.pathname);
       return;
     }
-
     if (product_id) {
       contextAddToCart(product_id);
     }
@@ -181,7 +237,7 @@ export const ProductDetails: React.FC = () => {
               </p>
 
               {/* Add To Cart actions */}
-              <div className="flex flex-col gap-3 mb-8">
+              {!user?.isAdmin && <div className="flex flex-col gap-3 mb-8">
                 {!isAddedToCart ? (
                   <Button
                     variant="accent"
@@ -220,10 +276,15 @@ export const ProductDetails: React.FC = () => {
                     </div>
                   </div>
                 )}
-                <Button variant="outline" className="w-full">
-                  Add to Wishlist
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={handleWishlistToggle}
+                  disabled={wishlistLoading}
+                >
+                  {isInWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
                 </Button>
-              </div>
+              </div>}
 
               {/* Product Specifications list */}
               <div className="border-t border-border-light pt-6">
