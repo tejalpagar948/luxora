@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Container } from '../../components/layout/Container';
 import { Button } from '../../components/ui/Button';
 import { ProductGrid } from '../../components/product/ProductGrid';
@@ -42,11 +43,11 @@ export const Home: React.FC = () => {
   return (
     <div className="w-full bg-background min-h-screen">
       {/* Hero Section */}
-      <section className="relative py-[64px] md:py-[120px] min-h-[75vh] flex items-center bg-[#F5F5F0] overflow-hidden">
+      <section className="relative py-[64px] md:py-[120px] min-h-[100vh] flex items-center overflow-hidden">
         {/* Decorative background image with soft beige overlay */}
         <div className="absolute inset-0 z-0">
           <img
-            src="/luxury_bag_hero_bg.png"
+            src="/Hero-banner.png"
             alt="Luxora Hero Background"
             className="w-full h-full object-cover"
           />
@@ -66,9 +67,11 @@ export const Home: React.FC = () => {
             Discover our curated collection of luxury leather bags. Designed for the high-discerning audience that values slow fashion and architectural elegance.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-            <Button variant="accent" className="!text-[#121212] font-semibold tracking-[0.05em] hover:bg-[#c29e2f] border-accent w-full sm:w-auto">
-              Shop Collection
-            </Button>
+            <Link to="/collections" className="w-full sm:w-auto">
+              <Button variant="accent" className="!text-[#121212] font-semibold tracking-[0.05em] hover:bg-[#c29e2f] border-accent w-full">
+                Shop Collection
+              </Button>
+            </Link>
             <Button variant="outline" className="hover:bg-[#121212] hover:text-[#FFFFFF] w-full sm:w-auto">
               Our Story
             </Button>
@@ -88,9 +91,9 @@ export const Home: React.FC = () => {
                 The Signature Selection
               </h2>
             </div>
-            <a href="/collections" className="font-body text-button text-primary hover:text-accent border-b border-primary hover:border-accent transition-colors duration-200 mt-4 md:mt-0 pb-1">
+            <Link to="/collections" className="font-body text-button text-primary hover:text-accent border-b border-primary hover:border-accent transition-colors duration-200 mt-4 md:mt-0 pb-1">
               View All Products
-            </a>
+            </Link>
           </div>
 
           <ProductGrid products={MOCK_PRODUCTS} columns={4} />
@@ -105,7 +108,7 @@ export const Home: React.FC = () => {
               <img
                 src="https://images.unsplash.com/photo-1547949003-9792a18a2601?auto=format&fit=crop&q=80&w=800"
                 alt="Craftsmanship"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
               />
             </div>
             <div className="flex flex-col items-start font-body">

@@ -119,14 +119,15 @@ export const Collections: React.FC = () => {
         </div>
 
         {/* Filter Chips */}
-        <div className="flex flex-wrap justify-center gap-3 mb-[64px] border-b border-border-light pb-8">
+        <div className="flex overflow-x-auto md:overflow-x-visible md:flex-wrap md:justify-center gap-3 mb-[48px] md:mb-[64px] border-b border-border-light pb-6 md:pb-8 no-scrollbar scroll-smooth snap-x snap-mandatory px-4 md:px-0">
           {CATEGORIES.map(category => (
-            <Chip
-              key={category.value}
-              label={category.label}
-              active={selectedCategory === category.value}
-              onClick={() => setSelectedCategory(category.value)}
-            />
+            <div key={category.value} className="snap-start shrink-0">
+              <Chip
+                label={category.label}
+                active={selectedCategory === category.value}
+                onClick={() => setSelectedCategory(category.value)}
+              />
+            </div>
           ))}
         </div>
 

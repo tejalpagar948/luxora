@@ -202,7 +202,7 @@ export const EditProduct: React.FC = () => {
               rows={4}
               value={product.description}
               onChange={(e) => handleChange('description', e.target.value)}
-              className="w-full px-4 py-3 border border-border-light rounded-md bg-background"
+              className="w-full px-4 py-3 border border-border-light rounded-md bg-background text-primary placeholder-neutral-400 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/15 transition-all duration-200"
               required
             />
           </FormField>
@@ -281,17 +281,18 @@ export const EditProduct: React.FC = () => {
           <p className="text-red-500 text-sm mt-4">{submitError}</p>
         )}
 
-        <div className="flex justify-end gap-3 mt-8">
+        <div className="flex flex-col sm:flex-row justify-end gap-3 mt-8">
           <Button
             type="button"
             variant="outline"
             onClick={() => navigate('/admin/products')}
             disabled={submitting}
+            className="w-full sm:w-auto"
           >
             Cancel
           </Button>
 
-          <Button type="submit" disabled={submitting} >
+          <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
             {submitting ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>

@@ -71,7 +71,7 @@ export const CreateProduct: React.FC = () => {
             <textarea
               rows={4}
               placeholder="Describe the silhouette, utility, and craftsmanship..."
-              className="w-full px-4 py-3 border border-border-light rounded-md bg-background text-primary placeholder-neutral-400 focus:outline-none focus:border-primary transition-colors duration-200"
+              className="w-full px-4 py-3 border border-border-light rounded-md bg-background text-primary placeholder-neutral-400 focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/15 transition-all duration-200"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               required

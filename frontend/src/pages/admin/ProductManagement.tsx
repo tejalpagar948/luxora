@@ -116,8 +116,8 @@ export const ProductManagement: React.FC = () => {
         </div>
 
 
-        <Link to="/admin/products/new" className="w-full sm:w-auto">
-          <Button variant="primary" className="w-full sm:w-auto">
+        <Link to="/admin/products/new" className="w-full sm:w-auto block sm:inline-block">
+          <Button variant="primary" className="w-full">
             Add New Product
           </Button>
         </Link>

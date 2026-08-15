@@ -26,7 +26,7 @@ import { EditProduct } from '../pages/admin/EditProduct';
 const StorefrontLayout: React.FC = () => (
   <div className="flex flex-col min-h-screen bg-background text-primary">
     <Header />
-    <main className="flex-grow">
+    <main className="flex-grow min-w-0">
       <Outlet />
     </main>
     <Footer />
@@ -39,7 +39,7 @@ const AdminLayout: React.FC = () => (
     <Header />
     <div className="flex flex-1">
       <AdminSidebar />
-      <main className="flex-grow">
+      <main className="flex-grow min-w-0">
         <Outlet />
       </main>
     </div>

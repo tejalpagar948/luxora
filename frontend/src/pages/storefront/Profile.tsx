@@ -173,21 +173,28 @@ export const Profile: React.FC = () => {
 
               {activeTab === 'orders' ? (
                 user.orders && user.orders.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="space-y-4 animate-fadeIn">
                     {user.orders.map((order: any, idx: number) => (
-                      <div key={idx} className="border border-border-light rounded-lg p-4 bg-background-alt flex justify-between items-center">
+                      <div key={idx} className="border border-border-light rounded-xl p-5 bg-background-alt flex justify-between items-center hover:shadow-md transition-all duration-300">
                         <div>
-                          <p className="text-sm font-semibold text-primary">Order #{order._id || idx + 1}</p>
-                          <p className="text-xs text-neutral-400">{new Date(order.createdAt).toLocaleDateString()}</p>
+                          <p className="text-sm font-semibold text-primary font-display">Order #{order._id ? order._id.slice(-6).toUpperCase() : idx + 1}</p>
+                          <p className="text-xs text-neutral-400 mt-0.5">{new Date(order.createdAt).toLocaleDateString()}</p>
+                          <span className="inline-block bg-green-50 text-green-700 border border-green-200 text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider mt-2.5">
+                            Paid
+                          </span>
                         </div>
-                        <span className="text-sm font-medium text-accent">${order.totalAmount}</span>
+                        <span className="text-base font-bold text-accent">${order.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="py-12 text-center border border-dashed border-border-light rounded-lg bg-background-alt flex flex-col items-center justify-center">
-                    <span className="text-2xl mb-2">📦</span>
-                    <p className="text-sm text-neutral-500">No orders found.</p>
+                  <div className="py-16 text-center border border-dashed border-border-light rounded-xl bg-background-alt flex flex-col items-center justify-center p-6 animate-fadeIn">
+                    <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center mb-4 text-xl shadow-inner">📦</div>
+                    <h3 className="font-display text-base font-semibold text-primary mb-1">No Orders Yet</h3>
+                    <p className="text-xs text-neutral-400 max-w-xs mb-6">Looks like you haven't placed any orders yet. Explore our latest luxury collections.</p>
+                    <Link to="/collections">
+                      <Button variant="outline" className="!py-2 !px-4 text-xs font-semibold uppercase tracking-wider">Start Shopping</Button>
+                    </Link>
                   </div>
                 )
               ) : (
@@ -196,26 +203,26 @@ export const Profile: React.FC = () => {
                     <p className="text-sm text-neutral-400">Loading wishlist...</p>
                   </div>
                 ) : wishlist.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="space-y-4 animate-fadeIn">
                     {wishlist.map((product: any) => (
-                      <div key={product._id} className="border border-border-light rounded-lg p-4 bg-background-alt flex items-center gap-4">
-                        <div className="w-16 h-16 rounded overflow-hidden bg-neutral-100 flex-shrink-0">
+                      <div key={product._id} className="border border-border-light rounded-xl p-4 bg-background-alt flex items-center gap-4 hover:shadow-md transition-all duration-300">
+                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-neutral-50 flex-shrink-0">
                           <img src={product.image || 'https://via.placeholder.com/150'} alt={product.title} className="w-full h-full object-cover" />
                         </div>
                         <div className="flex-grow min-w-0">
-                          <Link to={`/collections/${product._id}`} className="text-sm font-semibold text-primary hover:text-accent truncate block">
+                          <Link to={`/collections/${product._id}`} className="text-sm font-semibold text-primary hover:text-accent truncate block font-display">
                             {product.title}
                           </Link>
-                          <p className="text-xs text-neutral-400 capitalize">{product.category}</p>
-                          <p className="text-sm font-medium text-accent mt-1">${product.price}</p>
+                          <p className="text-[10px] text-neutral-400 capitalize font-medium">{product.category}</p>
+                          <p className="text-sm font-semibold text-accent mt-0.5">${product.price}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <Link to={`/collections/${product._id}`}>
-                            <Button variant="outline" className="!py-1.5 !px-1.5 text-[10px] uppercase tracking-wider font-semibold font-body rounded-md">View</Button>
+                            <Button variant="outline" className="!py-1.5 !px-2.5 text-[9px] uppercase tracking-wider font-semibold font-body rounded-md">View</Button>
                           </Link>
                           <Button
                             variant="outline"
-                            className="!py-1.5 !px-1.5 text-[10px] uppercase tracking-wider font-semibold font-body rounded-md border-red-200 hover:bg-red-50 hover:text-red-600 text-red-500 hover:border-red-600"
+                            className="!py-1.5 !px-2.5 text-[9px] uppercase tracking-wider font-semibold font-body rounded-md border-red-200 hover:bg-red-50 hover:text-red-600 text-red-500 hover:border-red-600"
                             onClick={() => handleRemoveFromWishlist(product._id)}
                           >
                             Remove
@@ -225,9 +232,13 @@ export const Profile: React.FC = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="py-12 text-center border border-dashed border-border-light rounded-lg bg-background-alt flex flex-col items-center justify-center">
-                    <span className="text-2xl mb-2">❤️</span>
-                    <p className="text-sm text-neutral-500">Your wishlist is empty.</p>
+                  <div className="py-16 text-center border border-dashed border-border-light rounded-xl bg-background-alt flex flex-col items-center justify-center p-6 animate-fadeIn">
+                    <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center mb-4 text-xl shadow-inner text-red-400">❤️</div>
+                    <h3 className="font-display text-base font-semibold text-primary mb-1">Your Wishlist is Empty</h3>
+                    <p className="text-xs text-neutral-400 max-w-xs mb-6">Keep track of the products you love. Add items to your wishlist to see them here.</p>
+                    <Link to="/collections">
+                      <Button variant="outline" className="!py-2 !px-4 text-xs font-semibold uppercase tracking-wider">Browse Products</Button>
+                    </Link>
                   </div>
                 )
               )}

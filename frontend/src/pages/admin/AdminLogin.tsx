@@ -17,7 +17,7 @@ export const AdminLogin: React.FC = () => {
     e.preventDefault();
 
     try {
-      const response = await login(formData);
+      await login(formData);
       
       // Fetch profile directly to verify administrative privileges
       const profileRes = await getUserProfile();
@@ -40,7 +40,7 @@ export const AdminLogin: React.FC = () => {
   return (
     <div className="w-full bg-background-alt min-h-screen flex items-center py-12">
       <Container className="w-full flex justify-center">
-        <div className="w-full max-w-md bg-background border border-border-light rounded-lg p-8 md:p-10 shadow-sm font-body">
+        <div className="w-full max-w-md bg-background border border-border-light rounded-2xl p-8 md:p-10 shadow-md hover:shadow-lg transition-all duration-300 font-body animate-fadeIn">
           <div className="text-center mb-8">
             <span className="font-body text-label-caps text-accent tracking-[0.2em] block mb-2">
               ADMIN CONTROL

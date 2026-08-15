@@ -287,15 +287,31 @@ export const ProductDetails: React.FC = () => {
               </div>}
 
               {/* Product Specifications list */}
-              <div className="border-t border-border-light pt-6">
-                <h3 className="font-body text-label-caps text-primary mb-4">
-                  Product Specifications
+              <div className="border-t border-border-light pt-8 mt-8">
+                <h3 className="font-body text-label-caps text-primary mb-4 font-bold tracking-widest text-[11px]">
+                  PRODUCT SPECIFICATIONS
                 </h3>
-                <ul className="list-disc pl-4 space-y-2 text-sm text-neutral-600">
-                  {productDetailsList.map((detail: string, index: number) => (
-                    <li key={index}>{detail}</li>
-                  ))}
-                </ul>
+                <div className="border border-border-light rounded-lg overflow-hidden bg-background-alt divide-y divide-border-light">
+                  {productDetailsList.map((detail: string, index: number) => {
+                    const colonIndex = detail.indexOf(':');
+                    if (colonIndex !== -1) {
+                      const label = detail.substring(0, colonIndex).trim();
+                      const value = detail.substring(colonIndex + 1).trim();
+                      return (
+                        <div key={index} className="grid grid-cols-1 sm:grid-cols-3 gap-1 p-4 text-xs sm:text-sm font-body">
+                          <span className="text-neutral-400 font-semibold uppercase tracking-wider text-[9px] sm:text-[10px]">{label}</span>
+                          <span className="text-primary font-semibold sm:col-span-2">{value}</span>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div key={index} className="p-4 text-xs sm:text-sm font-body text-neutral-600 flex items-center gap-2">
+                        <span className="text-accent text-[8px]">◆</span>
+                        <span>{detail}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>

@@ -32,7 +32,7 @@ const SHIPPING_FLAT = 50;
 export const Cart: React.FC = () => {
   const { cart, increaseQuantity, decreaseQuantity, removeProduct, removeManyProducts } = useCart();
   const [cartItems, setCartItems] = useState<CartLine[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [isPaymentOpen, setIsPaymentOpen] = useState<boolean>(false);
@@ -283,9 +283,22 @@ export const Cart: React.FC = () => {
                 </p>
               ) : (
                 <>
-                  {amountToFreeShip > 0 && (
-                    <div className="mb-5 bg-background rounded-md px-3 py-2 text-xs text-neutral-500">
-                      Add ${amountToFreeShip.toFixed(2)} more for free shipping.
+                  {amountToFreeShip > 0 ? (
+                    <div className="mb-6 bg-background rounded-lg p-4 text-xs text-neutral-500 border border-border-light shadow-sm">
+                      <div className="flex justify-between mb-1.5 font-medium">
+                        <span>Free Shipping Progress</span>
+                        <span>Add <span className="font-semibold text-accent">${amountToFreeShip.toFixed(2)}</span> more</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-neutral-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-accent transition-all duration-500 ease-out rounded-full"
+                          style={{ width: `${Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100)}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mb-6 bg-green-50/50 rounded-lg p-4 text-xs text-green-700 border border-green-100 font-semibold flex items-center gap-2">
+                      <span>🎉</span> You qualify for Free Shipping!
                     </div>
                   )}
 
