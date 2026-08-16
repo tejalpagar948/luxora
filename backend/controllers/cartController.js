@@ -176,6 +176,32 @@ module.exports.checkoutCart = async (req, res) => {
             ? "Pending"
             : "Paid";
 
+        // Check latest stock in DB for all items first
+        for (const item of items) {
+            const productId = item.product._id || item.product;
+            const dbProduct = await productModel.findById(productId);
+            if (!dbProduct) {
+                return res.status(404).json({
+                    success: false,
+                    message: `Product '${item.product?.title || "Unknown"}' not found`
+                });
+            }
+            if (item.quantity > dbProduct.stock) {
+                return res.status(409).json({
+                    success: false,
+                    message: `Item '${dbProduct.title}' is no longer available in the requested quantity. (Only ${dbProduct.stock} left in stock)`
+                });
+            }
+        }
+
+        // Decrement stock for all items
+        for (const item of items) {
+            const productId = item.product._id || item.product;
+            await productModel.findByIdAndUpdate(productId, {
+                $inc: { stock: -item.quantity }
+            });
+        }
+
         // Create order
         const newOrder = await orderModel.create({
             user: user._id,

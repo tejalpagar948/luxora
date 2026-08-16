@@ -54,9 +54,17 @@ export const Cart: React.FC = () => {
           border: '1px solid #D4AF37',
         },
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error placing order after payment:', err);
-      toast.error('Payment succeeded, but failed to process your order.');
+      if (err.response && err.response.status === 409) {
+        toast.error(
+          err.response.data?.message || 'Some items are no longer available in the requested quantity.',
+          { duration: 5000 }
+        );
+        await fetchCart();
+      } else {
+        toast.error('Payment succeeded, but failed to process your order.');
+      }
     }
   };
 
@@ -88,6 +96,10 @@ export const Cart: React.FC = () => {
         : SHIPPING_FLAT;
   const total = subtotal + shipping;
   const amountToFreeShip = FREE_SHIPPING_THRESHOLD - subtotal;
+  const hasInsufficientStock = selectedItems.some(
+    (item) => item.product.stock !== undefined && item.quantity > item.product.stock
+  );
+  const checkoutDisabled = selectedItems.length === 0 || hasInsufficientStock;
 
   const toggleSelect = (id: string) => {
     setCartItems((prev) =>
@@ -210,12 +222,17 @@ export const Cart: React.FC = () => {
                         {item.product.title}
                       </Link>
 
-                      {item.product.stock !== undefined &&
-                        item.quantity >= item.product.stock && (
+                      {item.product.stock !== undefined && item.quantity > item.product.stock ? (
+                        <span className="block text-xs text-red-500 font-semibold mt-1">
+                          Only {item.product.stock} pieces are available.
+                        </span>
+                      ) : (
+                        item.product.stock !== undefined && item.quantity === item.product.stock && (
                           <span className="block text-xs text-[#D4AF37] mt-1">
                             Only {item.product.stock} left in stock
                           </span>
-                        )}
+                        )
+                      )}
 
                       <div className="flex items-center gap-4 mt-3">
                         <div className="flex items-center border border-border-light rounded-md">
@@ -333,12 +350,14 @@ export const Cart: React.FC = () => {
               <Button
                 variant="primary"
                 fullWidth
-                disabled={selectedItems.length === 0}
+                disabled={checkoutDisabled}
                 onClick={() => setIsPaymentOpen(true)}
               >
                 {selectedItems.length === 0
                   ? 'Select items to checkout'
-                  : 'Proceed to Checkout'}
+                  : hasInsufficientStock
+                    ? 'Adjust quantities to checkout'
+                    : 'Proceed to Checkout'}
               </Button>
             </div>
           </div>
