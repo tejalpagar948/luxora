@@ -1,4 +1,9 @@
 const orderModel = require("../models/order-model");
+const {
+  sendOrderShippedEmail,
+  sendOrderDeliveredEmail,
+  sendOrderCancelledEmail
+} = require("../services/email-service");
 
 module.exports.getAdminOrders = async (req, res) => {
   try {
@@ -9,7 +14,7 @@ module.exports.getAdminOrders = async (req, res) => {
     const hasPage = !isNaN(page);
 
     let query = orderModel.find()
-      .populate("user", "fullName email username")      
+      .populate("user", "fullName email username")
       .sort({ createdAt: -1 });
 
     let orders;
@@ -66,21 +71,59 @@ module.exports.getAdminOrders = async (req, res) => {
 module.exports.updateOrderStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
+
   try {
-    const order = await orderModel.findById(id);
+    const order = await orderModel
+      .findById(id)
+      .populate("user", "email fullName");
+
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Order not found"
+      });
     }
+
     if (status) {
       order.status = status;
-      if (status === 'Delivered') {
-        order.paymentStatus = 'Paid';
+
+      if (status === "Delivered") {
+        order.paymentStatus = "Paid";
       }
     }
+
+    // Save updated order
     await order.save();
-    return res.status(200).json({ success: true, message: "Order updated successfully", data: order });
+
+    // Send email according to order status
+    try {
+      if (status === "Shipped") {
+        await sendOrderShippedEmail(order, order.user.email);
+      }
+
+      if (status === "Delivered") {
+        await sendOrderDeliveredEmail(order, order.user.email);
+      }
+
+      if (status === "Cancelled") {
+        await sendOrderCancelledEmail(order, order.user.email);
+      }
+    } catch (emailError) {
+      console.error("Order status email failed:", emailError);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Order updated successfully",
+      data: order
+    });
+
   } catch (error) {
     console.error("Error updating order status:", error);
-    return res.status(500).json({ success: false, message: "Internal server error" });
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error"
+    });
   }
 };

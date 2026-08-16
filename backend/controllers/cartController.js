@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const userModel = require("../models/user-model");
 const productModel = require("../models/product-model");
 const orderModel = require("../models/order-model");
+const { sendOrderConfirmationEmail } = require("../services/email-service");
 
 module.exports.getCart = async (req, res) => {
     try {
@@ -142,22 +143,40 @@ module.exports.deleteManyFromCart = async (req, res) => {
 
 module.exports.checkoutCart = async (req, res) => {
     const { items, totalAmount, paymentMethod } = req.body;
+
     if (!items || !Array.isArray(items) || items.length === 0) {
-        return res.status(400).json({ success: false, message: "No items selected for checkout" });
+        return res.status(400).json({
+            success: false,
+            message: "No items selected for checkout"
+        });
     }
+
     try {
         const user = await userModel.findOne({ email: req.user.email });
+
         if (!user) {
-            return res.status(404).json({ success: false, message: "User not found" });
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
         }
 
         if (user.isAdmin) {
-            return res.status(403).json({ success: false, message: "Administrators are not allowed to place orders." });
+            return res.status(403).json({
+                success: false,
+                message: "Administrators are not allowed to place orders."
+            });
         }
 
-        const status = paymentMethod === 'cod' ? 'Pending' : 'Paid & Processing';
-        const paymentStatus = paymentMethod === 'cod' ? 'Pending' : 'Paid';
+        const status = paymentMethod === "cod"
+            ? "Pending"
+            : "Paid & Processing";
 
+        const paymentStatus = paymentMethod === "cod"
+            ? "Pending"
+            : "Paid";
+
+        // Create order
         const newOrder = await orderModel.create({
             user: user._id,
             items: items.map(item => ({
@@ -167,21 +186,49 @@ module.exports.checkoutCart = async (req, res) => {
                 quantity: item.quantity
             })),
             totalAmount: Number(totalAmount),
-            paymentMethod: paymentMethod || 'card',
+            paymentMethod: paymentMethod || "card",
             status,
             paymentStatus,
             createdAt: new Date()
         });
 
+        // Send order confirmation email
+        try {
+            await sendOrderConfirmationEmail(newOrder, user.email);
+        } catch (emailError) {
+            console.error(
+                "Order confirmation email failed:",
+                emailError
+            );
+        }
+
         // Remove the checked out items from the cart
-        const checkedOutProductIds = items.map(item => item.product._id.toString());
-        user.cart = user.cart.filter(item => item.product && !checkedOutProductIds.includes(item.product.toString()));
+        const checkedOutProductIds = items.map(
+            item => item.product._id.toString()
+        );
+
+        user.cart = user.cart.filter(
+            item =>
+                item.product &&
+                !checkedOutProductIds.includes(
+                    item.product.toString()
+                )
+        );
 
         await user.save();
 
-        return res.status(200).json({ success: true, message: "Order placed successfully", order: newOrder });
+        return res.status(200).json({
+            success: true,
+            message: "Order placed successfully",
+            order: newOrder
+        });
+
     } catch (error) {
-        console.error(error);
-        return res.status(500).json({ success: false, message: "Internal server error" });
+        console.error("Error checking out:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
     }
 };
