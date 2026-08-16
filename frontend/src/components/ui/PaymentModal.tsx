@@ -22,7 +22,7 @@ interface PaymentModalProps {
   selectedItems: CartLine[];
   subtotal: number;
   shipping: number;
-  onPaymentSuccess: () => void;
+  onPaymentSuccess: (method: PaymentMethod) => void;
 }
 
 type PaymentMethod = 'card' | 'upi' | 'netbanking' | 'cod';
@@ -97,7 +97,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       setSuccess(true);
       // Wait for success screen animation to play, then trigger completion
       setTimeout(() => {
-        onPaymentSuccess();
+        onPaymentSuccess(method);
         onClose();
         setSuccess(false);
       }, 2000);
@@ -120,10 +120,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     }
   };
 
+  console.log("selectedItems", selectedItems, subtotal);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md px-4 overflow-y-auto">
       <div className="bg-[#141414] border border-neutral-800 rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col md:grid md:grid-cols-12 max-h-[90vh] md:max-h-[85vh] animate-fade-in relative text-neutral-200">
-        
+
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -229,11 +231,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         setMethod(t);
                         setFormError('');
                       }}
-                      className={`flex flex-col items-center justify-center p-3 rounded-lg border text-center transition-all ${
-                        method === t
-                          ? 'border-[#D4AF37] bg-[#D4AF37]/10 text-white font-medium'
-                          : 'border-neutral-800 bg-[#1A1A1A] hover:bg-neutral-800 text-neutral-400 hover:text-white'
-                      }`}
+                      className={`flex flex-col items-center justify-center p-3 rounded-lg border text-center transition-all ${method === t
+                        ? 'border-[#D4AF37] bg-[#D4AF37]/10 text-white font-medium'
+                        : 'border-neutral-800 bg-[#1A1A1A] hover:bg-neutral-800 text-neutral-400 hover:text-white'
+                        }`}
                     >
                       {t === 'card' && (
                         <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -405,6 +406,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       </svg>
                       <span>Processing Payment...</span>
                     </>
+                  ) : method === 'cod' ? (
+                    <span>Place Order</span>
                   ) : (
                     <span>Pay ${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                   )}
@@ -414,6 +417,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           </>
         )}
       </div>
-    </div>
+    </div >
   );
 };

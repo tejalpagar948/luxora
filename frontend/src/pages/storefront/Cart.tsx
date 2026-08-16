@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
 import { PaymentModal } from '../../components/ui/PaymentModal';
 import { toast } from 'react-hot-toast';
+import { checkoutCart } from '../../../services/cartService';
 
 interface Product {
   _id: string;
@@ -30,17 +31,21 @@ const FREE_SHIPPING_THRESHOLD = 1000;
 const SHIPPING_FLAT = 50;
 
 export const Cart: React.FC = () => {
-  const { cart, increaseQuantity, decreaseQuantity, removeProduct, removeManyProducts } = useCart();
+  const { cart, increaseQuantity, decreaseQuantity, removeProduct, fetchCart } = useCart();
   const [cartItems, setCartItems] = useState<CartLine[]>([]);
   const [loading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [isPaymentOpen, setIsPaymentOpen] = useState<boolean>(false);
 
-  const handlePaymentSuccess = async () => {
+  const handlePaymentSuccess = async (paymentMethod: string) => {
     try {
-      const selectedIds = selectedItems.map((item) => item._id);
-      await removeManyProducts(selectedIds);
+      await checkoutCart({
+        items: selectedItems,
+        totalAmount: total,
+        paymentMethod,
+      });
+      await fetchCart();
       toast.success('Payment received! Your order is being processed.', {
         icon: '✨',
         style: {
@@ -50,8 +55,8 @@ export const Cart: React.FC = () => {
         },
       });
     } catch (err) {
-      console.error('Error removing items after payment:', err);
-      toast.error('Payment succeeded, but failed to clear cart items.');
+      console.error('Error placing order after payment:', err);
+      toast.error('Payment succeeded, but failed to process your order.');
     }
   };
 

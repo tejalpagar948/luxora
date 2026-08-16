@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const userModel = require("../models/user-model");
+const orderModel = require("../models/order-model");
 const { generateToken } = require("../utils/generateToken");
 
 module.exports.registerUser = async (req, res) => {
@@ -101,3 +102,18 @@ module.exports.logoutUser = async (req, res) => {
         })
     }
 }
+
+module.exports.getUserProfile = async (req, res) => {
+    try {
+        const userObj = req.user.toObject();
+        const orders = await orderModel.find({ user: req.user._id }).sort({ createdAt: -1 });
+        userObj.orders = orders;
+        return res.status(200).json({
+            success: true,
+            data: userObj
+        });
+    } catch (error) {
+        console.error("Error in user profile route:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
+    }
+};

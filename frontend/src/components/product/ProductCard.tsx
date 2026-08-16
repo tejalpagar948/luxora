@@ -123,7 +123,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Quick Add overlay - hidden on mobile, slides up on desktop hover */}
         <div className="absolute inset-x-0 bottom-0 hidden sm:flex justify-center pb-6 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 ease-out">
           <button className="bg-background text-primary font-body text-button px-5 py-2 rounded-md hover:bg-primary hover:text-background transition-colors duration-300 uppercase shadow-md font-semibold tracking-wider text-[11px]">
-            Quick Shop
+            {user?.isAdmin ? "See Details" : "Quick Shop"}
           </button>
         </div>
       </Link>

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Navbar } from './Navbar';
 import { Container } from './Container';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../hooks/useCart';
@@ -20,19 +19,16 @@ export const Header: React.FC = () => {
   const links = isAdminPage
     ? [
       { name: 'Dashboard', path: '/admin' },
-      { name: 'Manage Products', path: '/admin/products' },
-      { name: 'Create Product', path: '/admin/products/new' },
+      // { name: 'Manage Products', path: '/admin/products' },
+      // { name: 'Create Product', path: '/admin/products/new' },
+      // { name: 'Orders', path: '/admin/orders' },
       { name: 'Storefront', path: '/' },
     ]
     : [
       { name: 'Home', path: '/' },
       { name: 'Collections', path: '/collections' },
-      { name: 'Cart', path: '/cart' },
-
-      // Sirf admin ko Admin link dikhega
-      ...(user?.isAdmin
-        ? [{ name: 'Admin', path: '/admin' }]
-        : []),
+      ...(!user?.isAdmin ? [{ name: 'Cart', path: '/cart' }] : []),
+      ...(user?.isAdmin ? [{ name: 'Admin', path: '/admin' }] : []),
     ];
 
   return (
@@ -62,12 +58,35 @@ export const Header: React.FC = () => {
 
         {/* Navigation Links */}
         <div className="hidden md:block">
-          <Navbar />
+          <nav className="flex space-x-8 font-body text-label-caps items-center">
+            {links.map((link) => {
+              const isActive = location.pathname === link.path;
+              const isCart = link.name === 'Cart';
+              return (
+                <Link
+                  key={link.name}
+                  to={link.path}
+                  className={`uppercase tracking-widest text-[12px] hover:text-accent transition-colors duration-200 py-1 relative flex items-center gap-1.5 ${isActive ? 'text-accent' : 'text-primary'
+                    }`}
+                >
+                  {link.name}
+                  {isCart && cartCount > 0 && (
+                    <span className="bg-accent text-[#121212] text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[16px] text-center">
+                      {cartCount}
+                    </span>
+                  )}
+                  {isActive && (
+                    <span className="absolute bottom-0 left-0 w-full h-[1px] bg-accent"></span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
         </div>
 
         {/* Action Elements */}
         <div className="flex items-center space-x-5 md:space-x-6 font-body text-label-caps">
-          
+
           {/* Shopping Cart Icon (visible only to non-admins) */}
           {!user?.isAdmin && (
             <Link
@@ -130,11 +149,10 @@ export const Header: React.FC = () => {
                   key={link.name}
                   to={link.path}
                   onClick={() => setIsMenuOpen(false)}
-                  className={`font-body text-label-caps uppercase text-sm tracking-widest font-semibold transition-all duration-200 ${
-                    isActive
-                      ? 'text-accent border-l-2 border-accent pl-3'
-                      : 'text-primary hover:text-accent hover:pl-3'
-                  }`}
+                  className={`font-body text-label-caps uppercase text-sm tracking-widest font-semibold transition-all duration-200 ${isActive
+                    ? 'text-accent border-l-2 border-accent pl-3'
+                    : 'text-primary hover:text-accent hover:pl-3'
+                    }`}
                 >
                   {link.name}
                   {link.name === 'Cart' && cartCount > 0 && (

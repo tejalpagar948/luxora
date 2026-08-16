@@ -34,21 +34,11 @@ const UserSchema = mongoose.Schema({
             ref: "Product"
         }
     ],
-    orders: {
-        type: Array,
-        default: []
-    },
     // cart: {
     //     type: [
     //         mongoose.Schema.Types.ObjectId
     //     ],
     //     ref: 'product'
-    // },
-    // orders: {
-    //     type: [
-    //         mongoose.Schema.Types.ObjectId
-    //     ],
-    //     ref: 'order'
     // },
     createdAt: {
         type: Date,

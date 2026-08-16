@@ -6,7 +6,7 @@ import { AdminSidebar } from '../components/layout/AdminSidebar';
 import ProtectedRoute from "../components/auth/ProtectedRoute";
 import { AdminLogin } from '../pages/admin/AdminLogin';
 import AdminProtectedRoute from '../components/auth/AdminProtectedRoute';
-
+import UserOnlyRoute from '../components/auth/UserOnlyRoute';
 // Storefront Pages
 import { Home } from '../pages/storefront/Home';
 import { Collections } from '../pages/storefront/Collections';
@@ -21,6 +21,7 @@ import { Dashboard } from '../pages/admin/Dashboard';
 import { ProductManagement } from '../pages/admin/ProductManagement';
 import { CreateProduct } from '../pages/admin/CreateProduct';
 import { EditProduct } from '../pages/admin/EditProduct';
+import { Orders } from '../pages/admin/Orders';
 
 // Storefront Layout Wrapper
 const StorefrontLayout: React.FC = () => (
@@ -74,8 +75,13 @@ export const router = createBrowserRouter([
       {
         element: <ProtectedRoute />,
         children: [
-          { path: "/cart", element: <Cart /> },
           { path: "/profile", element: <Profile /> },
+          {
+            element: <UserOnlyRoute />,
+            children: [
+              { path: "/cart", element: <Cart /> },
+            ]
+          }
         ],
       },
     ]
@@ -89,6 +95,7 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <Dashboard /> },
           { path: 'products', element: <ProductManagement /> },
+          { path: 'orders', element: <Orders /> },
           { path: 'products/new', element: <CreateProduct /> },
           { path: 'products/:id/edit', element: <EditProduct /> },
         ],

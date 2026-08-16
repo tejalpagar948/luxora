@@ -4,8 +4,9 @@ import { NavLink } from 'react-router-dom';
 export const AdminSidebar: React.FC = () => {
   const menuItems = [
     { name: 'Dashboard', path: '/admin', end: true },
-    { name: 'Manage Products', path: '/admin/products', end: false },
-    { name: 'Create Product', path: '/admin/products/new', end: false },
+    { name: 'Manage Orders', path: '/admin/orders', end: true },
+    { name: 'Manage Products', path: '/admin/products', end: true },
+    { name: 'Create Product', path: '/admin/products/new', end: true },
   ];
 
   return (
@@ -26,10 +27,9 @@ export const AdminSidebar: React.FC = () => {
             to={item.path}
             end={item.end}
             className={({ isActive }) =>
-              `font-body text-label-caps uppercase tracking-widest text-[11px] py-2 px-3 rounded-md transition-all duration-200 ${
-                isActive
-                  ? 'bg-primary text-background'
-                  : 'text-primary hover:bg-secondary'
+              `font-body text-label-caps uppercase tracking-widest text-[11px] py-2 px-3 rounded-md transition-all duration-200 ${isActive
+                ? 'bg-primary text-background'
+                : 'text-primary hover:bg-secondary'
               }`
             }
           >

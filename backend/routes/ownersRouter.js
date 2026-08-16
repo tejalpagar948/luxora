@@ -1,7 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const ownerModel = require("../models/owners-model");
+const userModel = require("../models/user-model");
 const isAdmin = require("../middleware/isAdmin");
+const { getAdminOrders, updateOrderStatus } = require("../controllers/orderController");
 
 router.get("/", (req, res) => {
   res.send("Owner Router");
@@ -32,5 +34,8 @@ if (process.env.NODE_ENV == "development") {
 router.get("/admin", isAdmin, (req, res) => {
   res.send("Owner Router");
 });
+
+router.get("/orders", isAdmin, getAdminOrders);
+router.put("/orders/:id/status", isAdmin, updateOrderStatus);
 
 module.exports = router;

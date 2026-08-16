@@ -19,3 +19,7 @@ export const updateCart = (id, quantity) => {
 export const deleteManyFromCart = (ids) => {
     return api.post(`/cart/delete-many`, { ids })
 }
+
+export const checkoutCart = ({ items, totalAmount, paymentMethod }) => {
+    return api.post(`/cart/checkout`, { items, totalAmount, paymentMethod })
+}
