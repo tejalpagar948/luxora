@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { getAdminOrders } from '../../../services/adminService';
 
 interface HealthData {
   status: string;
@@ -7,15 +8,41 @@ interface HealthData {
   uptime: number;
 }
 
+interface OrderItem {
+  product: string;
+  title: string;
+  price: number;
+  quantity: number;
+}
+
+interface CustomerInfo {
+  fullName: string;
+  email: string;
+  username: string;
+}
+
+interface Order {
+  _id: string;
+  totalAmount: number;
+  createdAt: string;
+  items: OrderItem[];
+  customer: CustomerInfo;
+  paymentMethod?: string;
+  status?: string;
+  paymentStatus?: string;
+}
+
 export const Dashboard: React.FC = () => {
   const [backendStatus, setBackendStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   const [healthInfo, setHealthInfo] = useState<HealthData | null>(null);
   const [errorDetails, setErrorDetails] = useState<string>('');
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const checkBackendHealth = async () => {
       try {
-        const response = await fetch('http://localhost:3000/health');
+        const response = await fetch('http://localhost:3000/shop');
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -32,6 +59,23 @@ export const Dashboard: React.FC = () => {
 
     const interval = setInterval(checkBackendHealth, 10000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const fetchRecentOrders = async () => {
+      try {
+        setOrdersLoading(true);
+        const res = await getAdminOrders({ limit: 5 });
+        if (res.data?.success) {
+          setRecentOrders(res.data.data || []);
+        }
+      } catch (err) {
+        console.error("Error fetching recent orders:", err);
+      } finally {
+        setOrdersLoading(false);
+      }
+    };
+    fetchRecentOrders();
   }, []);
 
   const formatUptime = (seconds: number) => {
@@ -106,7 +150,7 @@ export const Dashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-background-alt p-4 rounded-md">
             <span className="block text-xs text-neutral-400 uppercase tracking-wider mb-1">Backend API URL</span>
-            <span className="text-sm font-semibold text-primary break-all">http://localhost:3000/health</span>
+            <span className="text-sm font-semibold text-primary break-all">http://localhost:3000/shop</span>
           </div>
           <div className="bg-background-alt p-4 rounded-md">
             <span className="block text-xs text-neutral-400 uppercase tracking-wider mb-1">Database Status</span>
@@ -154,20 +198,47 @@ export const Dashboard: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              <tr className="border-b border-border-light hover:bg-background-alt/50 transition-colors">
-                <td className="py-4 px-4 font-semibold text-primary">#1024</td>
-                <td className="py-4 px-4">Alice Johnson</td>
-                <td className="py-4 px-4">The Signature Tote</td>
-                <td className="py-4 px-4">July 28, 2026</td>
-                <td className="py-4 px-4 font-semibold text-primary">$850.00</td>
-              </tr>
-              <tr className="border-b border-border-light hover:bg-background-alt/50 transition-colors">
-                <td className="py-4 px-4 font-semibold text-primary">#1023</td>
-                <td className="py-4 px-4">Bob Smith</td>
-                <td className="py-4 px-4">Heritage Crossbody</td>
-                <td className="py-4 px-4">July 26, 2026</td>
-                <td className="py-4 px-4 font-semibold text-primary">$490.00</td>
-              </tr>
+              {ordersLoading ? (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-neutral-400">
+                    Loading recent orders...
+                  </td>
+                </tr>
+              ) : recentOrders.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-neutral-400">
+                    No recent orders found.
+                  </td>
+                </tr>
+              ) : (
+                recentOrders.map((order) => (
+                  <tr key={order._id} className="border-b border-border-light hover:bg-background-alt/50 transition-colors">
+                    <td className="py-4 px-4 font-semibold text-primary font-mono text-xs">
+                      #{order._id.slice(-6).toUpperCase()}
+                    </td>
+                    <td className="py-4 px-4">
+                      {order.customer?.fullName || 'Anonymous'}
+                    </td>
+                    <td className="py-4 px-4 truncate max-w-[200px]" title={order.items.map(item => `${item.title} (x${item.quantity})`).join(', ')}>
+                      {order.items && order.items.length > 0
+                        ? order.items.length > 1
+                          ? `${order.items[0].title} + ${order.items.length - 1} more`
+                          : order.items[0].title
+                        : 'No items'}
+                    </td>
+                    <td className="py-4 px-4 text-xs text-neutral-400">
+                      {new Date(order.createdAt).toLocaleDateString(undefined, {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </td>
+                    <td className="py-4 px-4 font-semibold text-accent font-display">
+                      ${order.totalAmount.toFixed(2)}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

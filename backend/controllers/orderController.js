@@ -2,9 +2,31 @@ const orderModel = require("../models/order-model");
 
 module.exports.getAdminOrders = async (req, res) => {
   try {
-    const orders = await orderModel.find()
-      .populate("user", "fullName email username")
+    const page = parseInt(req.query.page);
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const hasPage = !isNaN(page);
+
+    let query = orderModel.find()
+      .populate("user", "fullName email username")      
       .sort({ createdAt: -1 });
+
+    let orders;
+    let totalOrders = 0;
+    let totalPages = 1;
+
+    if (hasPage) {
+      totalOrders = await orderModel.countDocuments();
+      totalPages = Math.ceil(totalOrders / limit);
+      orders = await query.skip(skip).limit(limit);
+    } else {
+      if (req.query.limit) {
+        orders = await query.limit(limit);
+      } else {
+        orders = await query;
+      }
+    }
 
     const allOrders = orders.map(order => ({
       _id: order._id,
@@ -21,7 +43,20 @@ module.exports.getAdminOrders = async (req, res) => {
       }
     }));
 
-    return res.status(200).json({ success: true, data: allOrders });
+    if (hasPage) {
+      return res.status(200).json({
+        success: true,
+        data: allOrders,
+        pagination: {
+          totalOrders,
+          totalPages,
+          currentPage: page,
+          limit
+        }
+      });
+    } else {
+      return res.status(200).json({ success: true, data: allOrders });
+    }
   } catch (error) {
     console.error("Error fetching admin orders:", error);
     return res.status(500).json({ success: false, message: "Internal server error" });

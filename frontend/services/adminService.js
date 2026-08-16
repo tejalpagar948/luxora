@@ -1,7 +1,7 @@
 import api from "./api";
 
-export const getAdminOrders = () => {
-  return api.get("/owners/orders");
+export const getAdminOrders = (params) => {
+  return api.get("/owners/orders", { params });
 };
 
 export const updateOrderStatus = (orderId, data) => {

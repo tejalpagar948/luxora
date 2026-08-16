@@ -226,14 +226,20 @@ export const Orders: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (pageToFetch = currentPage) => {
     try {
       setLoading(true);
       setError('');
-      const res = await getAdminOrders();
+      const res = await getAdminOrders({ page: pageToFetch, limit: 10 });
       if (res.data?.success) {
         setOrders(res.data.data || []);
+        if (res.data.pagination) {
+          setTotalPages(res.data.pagination.totalPages || 1);
+          setCurrentPage(res.data.pagination.currentPage || 1);
+        }
       } else {
         setError(res.data?.message || 'Failed to fetch orders.');
       }
@@ -246,8 +252,8 @@ export const Orders: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    fetchOrders(currentPage);
+  }, [currentPage]);
 
   const toggleExpandOrder = (id: string) => {
     setExpandedOrderId((prev) => (prev === id ? null : id));
@@ -269,7 +275,7 @@ export const Orders: React.FC = () => {
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6">
         <div className="max-w-md text-center">
           <p className="font-body text-red-500 font-medium mb-4">{error}</p>
-          <Button variant="outline" onClick={fetchOrders}>
+          <Button variant="outline" onClick={() => fetchOrders(currentPage)}>
             Try Again
           </Button>
         </div>
@@ -327,18 +333,55 @@ export const Orders: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-light text-primary">
-                {orders.map((order) => (
+                 {orders.map((order) => (
                   <OrderRow
                     key={order._id}
                     order={order}
                     isExpanded={expandedOrderId === order._id}
                     onToggleExpand={() => toggleExpandOrder(order._id)}
-                    onStatusUpdated={fetchOrders}
+                    onStatusUpdated={() => fetchOrders(currentPage)}
                   />
                 ))}
               </tbody>
             </table>
           </div>
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-between items-center px-6 py-4 bg-background-alt border-t border-border-light font-body">
+              <span className="text-xs text-neutral-400">
+                Page {currentPage} of {totalPages}
+              </span>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 text-xs border border-border-light rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-neutral-50 font-semibold cursor-pointer transition-colors duration-150"
+                >
+                  Previous
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-2.5 py-1 text-xs border rounded font-semibold cursor-pointer transition-colors duration-150 ${
+                      currentPage === page
+                        ? 'bg-accent text-[#121212] border-accent'
+                        : 'border-border-light hover:bg-neutral-50 text-neutral-600'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 text-xs border border-border-light rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-neutral-50 font-semibold cursor-pointer transition-colors duration-150"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
