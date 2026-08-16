@@ -219,13 +219,15 @@ export const ProductDetails: React.FC = () => {
             <span className="text-xs uppercase tracking-widest text-neutral-400 font-semibold mb-2">
               {productCategory}
             </span>
-            <div className="flex justify-between items-baseline mb-4">
+            <div className="flex justify-between items-baseline mb-4 flex-wrap gap-2">
               <h1 className="font-display text-headline-md text-primary font-semibold">
                 {productName}
               </h1>
-              {/* {productTag && (
-                <Badge variant="accent">{productTag}</Badge>
-              )} */}
+              {product.stock !== undefined && product.stock <= 0 && (
+                <span className="bg-red-600 text-white font-body text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded-md shadow-sm">
+                  OUT OF STOCK
+                </span>
+              )}
             </div>
             <span className="text-[22px] font-semibold text-primary mb-6">
               ${productPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
