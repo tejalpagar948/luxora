@@ -12,6 +12,7 @@ export interface Product {
   category: string;
   tag?: string;
   stock?: number;
+  createdAt?: string;
 }
 
 interface ProductCardProps {

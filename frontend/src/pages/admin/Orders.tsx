@@ -25,6 +25,15 @@ interface Order {
   paymentMethod?: string;
   status?: string;
   paymentStatus?: string;
+  shippingAddress?: {
+    fullName: string;
+    phone: string;
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
 }
 
 const OrderRow: React.FC<{
@@ -142,6 +151,18 @@ const OrderRow: React.FC<{
                       <strong className="text-primary font-medium">Payment Method:</strong>{' '}
                       <span className="uppercase font-mono text-[10px] bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded border border-neutral-200 font-bold ml-1">{order.paymentMethod || 'card'}</span>
                     </p>
+                    {order.shippingAddress && (
+                      <div className="border-t border-border-light/60 pt-4 mt-4 space-y-2">
+                        <strong className="text-primary font-medium block">Shipping Address:</strong>
+                        <div className="text-xs text-neutral-400 leading-relaxed font-body">
+                          <p className="font-semibold text-primary">{order.shippingAddress.fullName}</p>
+                          {order.shippingAddress.phone && <p>Phone: {order.shippingAddress.phone}</p>}
+                          <p>{order.shippingAddress.street}</p>
+                          <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zipCode}</p>
+                          <p className="uppercase text-[10px] text-neutral-500 font-semibold">{order.shippingAddress.country}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 

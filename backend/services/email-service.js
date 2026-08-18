@@ -12,10 +12,19 @@ const sendOrderConfirmationEmail = async (order, customerEmail) => {
       <p>Thank you for shopping with LUXORA!</p>
 
       <p>Your order has been successfully placed.</p>
-
       <p><strong>Order ID:</strong> ${order._id}</p>
       <p><strong>Total Amount:</strong> ₹${order.totalAmount}</p>
       <p><strong>Payment Method:</strong> ${order.paymentMethod}</p>
+      ${order.shippingAddress ? `
+        <h3>Shipping Address</h3>
+        <p style="line-height: 1.5; color: #444;">
+          <strong>${order.shippingAddress.fullName}</strong><br />
+          Phone: ${order.shippingAddress.phone}<br />
+          ${order.shippingAddress.street}<br />
+          ${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.zipCode}<br />
+          ${order.shippingAddress.country}
+        </p>
+      ` : ''}
 
       <h3>Order Items</h3>
       <ul>

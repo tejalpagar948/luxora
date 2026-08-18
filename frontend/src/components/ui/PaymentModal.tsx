@@ -22,7 +22,7 @@ interface PaymentModalProps {
   selectedItems: CartLine[];
   subtotal: number;
   shipping: number;
-  onPaymentSuccess: (method: PaymentMethod) => void;
+  onPaymentSuccess: (method: PaymentMethod, shippingAddress: any) => void;
 }
 
 type PaymentMethod = 'card' | 'upi' | 'netbanking' | 'cod';
@@ -35,9 +35,19 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   shipping,
   onPaymentSuccess,
 }) => {
+  const [checkoutStep, setCheckoutStep] = useState<'shipping' | 'payment'>('shipping');
   const [method, setMethod] = useState<PaymentMethod>('card');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  // Shipping form states
+  const [shippingName, setShippingName] = useState('');
+  const [shippingPhone, setShippingPhone] = useState('');
+  const [shippingStreet, setShippingStreet] = useState('');
+  const [shippingCity, setShippingCity] = useState('');
+  const [shippingState, setShippingState] = useState('');
+  const [shippingZip, setShippingZip] = useState('');
+  const [shippingCountry, setShippingCountry] = useState('USA');
 
   // Form states
   const [cardNumber, setCardNumber] = useState('');
@@ -86,6 +96,35 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     return true;
   };
 
+  const validateShipping = (): boolean => {
+    setFormError('');
+    if (!shippingName.trim()) {
+      setFormError('Please enter a recipient name for delivery.');
+      return false;
+    }
+    if (!shippingPhone.trim()) {
+      setFormError('Please enter a contact phone number.');
+      return false;
+    }
+    if (!shippingStreet.trim()) {
+      setFormError('Please enter the delivery street address.');
+      return false;
+    }
+    if (!shippingCity.trim()) {
+      setFormError('Please enter the delivery city.');
+      return false;
+    }
+    if (!shippingState.trim()) {
+      setFormError('Please enter the delivery state or region.');
+      return false;
+    }
+    if (!shippingZip.trim()) {
+      setFormError('Please enter the ZIP/postal code.');
+      return false;
+    }
+    return true;
+  };
+
   const handlePay = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -97,9 +136,18 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       setSuccess(true);
       // Wait for success screen animation to play, then trigger completion
       setTimeout(() => {
-        onPaymentSuccess(method);
+        onPaymentSuccess(method, {
+          fullName: shippingName,
+          phone: shippingPhone,
+          street: shippingStreet,
+          city: shippingCity,
+          state: shippingState,
+          zipCode: shippingZip,
+          country: shippingCountry,
+        });
         onClose();
         setSuccess(false);
+        setCheckoutStep('shipping'); // Reset step for future open
       }, 2000);
     }, 1800);
   };
@@ -215,205 +263,346 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             </div>
 
             {/* Right Column: Checkout & Payment (col-span-7) */}
-            <form onSubmit={handlePay} className="col-span-7 p-6 md:p-8 flex flex-col justify-between overflow-y-auto">
-              <div>
-                <h3 className="font-display text-lg text-white font-semibold tracking-wide mb-6">
-                  Payment Method
-                </h3>
+            <div className="col-span-7 p-6 md:p-8 flex flex-col justify-between overflow-y-auto">
+              {checkoutStep === 'shipping' ? (
+                <div className="flex flex-col h-full justify-between">
+                  <div>
+                    <h3 className="font-display text-lg text-white font-semibold tracking-wide mb-6">
+                      Shipping Address
+                    </h3>
+                    
+                    {formError && (
+                      <div className="mb-4 text-xs text-red-400 bg-red-950/30 border border-red-900 rounded p-2.5">
+                        {formError}
+                      </div>
+                    )}
 
-                {/* Tabs */}
-                <div className="grid grid-cols-4 gap-2 mb-6">
-                  {(['card', 'upi', 'netbanking', 'cod'] as const).map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => {
-                        setMethod(t);
-                        setFormError('');
-                      }}
-                      className={`flex flex-col items-center justify-center p-3 rounded-lg border text-center transition-all ${method === t
-                        ? 'border-[#D4AF37] bg-[#D4AF37]/10 text-white font-medium'
-                        : 'border-neutral-800 bg-[#1A1A1A] hover:bg-neutral-800 text-neutral-400 hover:text-white'
-                        }`}
-                    >
-                      {t === 'card' && (
-                        <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                        </svg>
-                      )}
-                      {t === 'upi' && (
-                        <span className="text-xs font-bold font-display tracking-tighter mb-1.5 h-4 flex items-center">
-                          UPI
-                        </span>
-                      )}
-                      {t === 'netbanking' && (
-                        <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                        </svg>
-                      )}
-                      {t === 'cod' && (
-                        <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 01-1-1" />
-                        </svg>
-                      )}
-                      <span className="text-[10px] capitalize tracking-wide">
-                        {t === 'netbanking' ? 'Net Bank' : t.toUpperCase()}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Form Fields */}
-                <div className="bg-[#1A1A1A] border border-neutral-800 rounded-lg p-5 min-h-[180px] flex flex-col justify-center">
-                  {formError && (
-                    <div className="mb-4 text-xs text-red-400 bg-red-950/30 border border-red-900 rounded p-2.5">
-                      {formError}
-                    </div>
-                  )}
-
-                  {method === 'card' && (
                     <div className="space-y-4">
-                      <div>
-                        <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1 font-semibold">
-                          Cardholder Name
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={cardName}
-                          onChange={(e) => setCardName(e.target.value)}
-                          placeholder="e.g. John Doe"
-                          className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1 font-semibold">
-                          Card Number
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={cardNumber}
-                          onChange={handleCardNumberChange}
-                          placeholder="0000 0000 0000 0000"
-                          className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1 font-semibold">
-                            Expiry Date
+                            Recipient Name
                           </label>
                           <input
                             type="text"
-                            required
-                            value={expiry}
-                            onChange={handleExpiryChange}
-                            placeholder="MM/YY"
+                            value={shippingName}
+                            onChange={(e) => setShippingName(e.target.value)}
+                            placeholder="e.g. John Doe"
                             className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
                           />
                         </div>
                         <div>
                           <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1 font-semibold">
-                            CVV
+                            Phone Number
                           </label>
                           <input
-                            type="password"
-                            required
-                            value={cvv}
-                            onChange={(e) => setCvv(e.target.value.replace(/\D/g, '').substring(0, 4))}
-                            placeholder="123"
+                            type="text"
+                            value={shippingPhone}
+                            onChange={(e) => setShippingPhone(e.target.value)}
+                            placeholder="e.g. +1 555 123 4567"
+                            className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1 font-semibold">
+                          Street Address
+                        </label>
+                        <input
+                          type="text"
+                          value={shippingStreet}
+                          onChange={(e) => setShippingStreet(e.target.value)}
+                          placeholder="e.g. 123 Luxury Ave, Apt 4B"
+                          className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1 font-semibold">
+                            City
+                          </label>
+                          <input
+                            type="text"
+                            value={shippingCity}
+                            onChange={(e) => setShippingCity(e.target.value)}
+                            placeholder="e.g. New York"
+                            className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1 font-semibold">
+                            State / Region
+                          </label>
+                          <input
+                            type="text"
+                            value={shippingState}
+                            onChange={(e) => setShippingState(e.target.value)}
+                            placeholder="e.g. NY"
+                            className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1 font-semibold">
+                            ZIP / Postal Code
+                          </label>
+                          <input
+                            type="text"
+                            value={shippingZip}
+                            onChange={(e) => setShippingZip(e.target.value)}
+                            placeholder="e.g. 10001"
+                            className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1 font-semibold">
+                            Country
+                          </label>
+                          <input
+                            type="text"
+                            value={shippingCountry}
+                            onChange={(e) => setShippingCountry(e.target.value)}
+                            placeholder="e.g. USA"
                             className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
                           />
                         </div>
                       </div>
                     </div>
-                  )}
+                  </div>
 
-                  {method === 'upi' && (
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1 font-semibold">
-                          UPI ID
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={upiId}
-                          onChange={(e) => setUpiId(e.target.value)}
-                          placeholder="e.g. name@bank"
-                          className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
-                        />
-                      </div>
-                      <p className="text-[11px] text-neutral-500 leading-relaxed">
-                        A payment request will be sent to your UPI app. Open the app to complete the checkout.
-                      </p>
-                    </div>
-                  )}
-
-                  {method === 'netbanking' && (
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1 font-semibold">
-                          Select Bank
-                        </label>
-                        <select
-                          value={selectedBank}
-                          onChange={(e) => setSelectedBank(e.target.value)}
-                          className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] transition-colors"
-                        >
-                          <option value="">-- Choose your Bank --</option>
-                          <option value="chase">JPMorgan Chase</option>
-                          <option value="bofa">Bank of America</option>
-                          <option value="wells">Wells Fargo</option>
-                          <option value="citigroup">Citigroup</option>
-                          <option value="capone">Capital One</option>
-                        </select>
-                      </div>
-                      <p className="text-[11px] text-neutral-500 leading-relaxed">
-                        You will be redirected to your bank's secure page to complete the transaction.
-                      </p>
-                    </div>
-                  )}
-
-                  {method === 'cod' && (
-                    <div className="text-center py-4">
-                      <span className="text-sm font-semibold text-white block mb-1">
-                        Cash on Delivery
-                      </span>
-                      <p className="text-[11px] text-neutral-400 max-w-sm mx-auto leading-relaxed">
-                        Pay with cash upon receipt. No pre-payment information is required. An additional verification step might occur on arrival.
-                      </p>
-                    </div>
-                  )}
+                  <div className="mt-8">
+                    <Button
+                      type="button"
+                      variant="accent"
+                      className="w-full h-11 flex items-center justify-center gap-2 font-semibold"
+                      onClick={() => {
+                        if (validateShipping()) {
+                          setCheckoutStep('payment');
+                        }
+                      }}
+                    >
+                      Continue to Payment
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <form onSubmit={handlePay} className="flex flex-col h-full justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="font-display text-lg text-white font-semibold tracking-wide">
+                        Payment Method
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormError('');
+                          setCheckoutStep('shipping');
+                        }}
+                        className="text-xs text-[#D4AF37] hover:underline font-semibold cursor-pointer bg-transparent border-none outline-none"
+                      >
+                        ← Edit Shipping
+                      </button>
+                    </div>
 
-              {/* Pay Button */}
-              <div className="mt-8">
-                <Button
-                  type="submit"
-                  variant="accent"
-                  className="w-full h-11 relative overflow-hidden flex items-center justify-center gap-2 font-semibold"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <svg className="animate-spin h-5 w-5 text-black" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
-                      <span>Processing Payment...</span>
-                    </>
-                  ) : method === 'cod' ? (
-                    <span>Place Order</span>
-                  ) : (
-                    <span>Pay ${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                  )}
-                </Button>
-              </div>
-            </form>
+                    {/* Tabs */}
+                    <div className="grid grid-cols-4 gap-2 mb-6">
+                      {(['card', 'upi', 'netbanking', 'cod'] as const).map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => {
+                            setMethod(t);
+                            setFormError('');
+                          }}
+                          className={`flex flex-col items-center justify-center p-3 rounded-lg border text-center transition-all cursor-pointer ${method === t
+                            ? 'border-[#D4AF37] bg-[#D4AF37]/10 text-white font-medium'
+                            : 'border-neutral-800 bg-[#1A1A1A] hover:bg-neutral-800 text-neutral-400 hover:text-white'
+                            }`}
+                        >
+                          {t === 'card' && (
+                            <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                            </svg>
+                          )}
+                          {t === 'upi' && (
+                            <span className="text-xs font-bold font-display tracking-tighter mb-1.5 h-4 flex items-center">
+                              UPI
+                            </span>
+                          )}
+                          {t === 'netbanking' && (
+                            <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                          )}
+                          {t === 'cod' && (
+                            <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 01-1-1" />
+                            </svg>
+                          )}
+                          <span className="text-[10px] capitalize tracking-wide">
+                            {t === 'netbanking' ? 'Net Bank' : t.toUpperCase()}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Form Fields */}
+                    <div className="bg-[#1A1A1A] border border-neutral-800 rounded-lg p-5 min-h-[180px] flex flex-col justify-center">
+                      {formError && (
+                        <div className="mb-4 text-xs text-red-400 bg-red-950/30 border border-red-900 rounded p-2.5">
+                          {formError}
+                        </div>
+                      )}
+
+                      {method === 'card' && (
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1 font-semibold">
+                              Cardholder Name
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={cardName}
+                              onChange={(e) => setCardName(e.target.value)}
+                              placeholder="e.g. John Doe"
+                              className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1 font-semibold">
+                              Card Number
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={cardNumber}
+                              onChange={handleCardNumberChange}
+                              placeholder="0000 0000 0000 0000"
+                              className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1 font-semibold">
+                                Expiry Date
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                value={expiry}
+                                onChange={handleExpiryChange}
+                                placeholder="MM/YY"
+                                className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1 font-semibold">
+                                CVV
+                              </label>
+                              <input
+                                type="password"
+                                required
+                                value={cvv}
+                                onChange={(e) => setCvv(e.target.value.replace(/\D/g, '').substring(0, 4))}
+                                placeholder="123"
+                                className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {method === 'upi' && (
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1 font-semibold">
+                              UPI ID
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={upiId}
+                              onChange={(e) => setUpiId(e.target.value)}
+                              placeholder="e.g. name@bank"
+                              className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
+                            />
+                          </div>
+                          <p className="text-[11px] text-neutral-500 leading-relaxed">
+                            A payment request will be sent to your UPI app. Open the app to complete the checkout.
+                          </p>
+                        </div>
+                      )}
+
+                      {method === 'netbanking' && (
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1 font-semibold">
+                              Select Bank
+                            </label>
+                            <select
+                              value={selectedBank}
+                              onChange={(e) => setSelectedBank(e.target.value)}
+                              className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] transition-colors"
+                            >
+                              <option value="">-- Choose your Bank --</option>
+                              <option value="chase">JPMorgan Chase</option>
+                              <option value="bofa">Bank of America</option>
+                              <option value="wells">Wells Fargo</option>
+                              <option value="citigroup">Citigroup</option>
+                              <option value="capone">Capital One</option>
+                            </select>
+                          </div>
+                          <p className="text-[11px] text-neutral-500 leading-relaxed">
+                            You will be redirected to your bank's secure page to complete the transaction.
+                          </p>
+                        </div>
+                      )}
+
+                      {method === 'cod' && (
+                        <div className="text-center py-4">
+                          <span className="text-sm font-semibold text-white block mb-1">
+                            Cash on Delivery
+                          </span>
+                          <p className="text-[11px] text-neutral-400 max-w-sm mx-auto leading-relaxed">
+                            Pay with cash upon receipt. No pre-payment information is required. An additional verification step might occur on arrival.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Pay Button */}
+                  <div className="mt-8">
+                    <Button
+                      type="submit"
+                      variant="accent"
+                      className="w-full h-11 relative overflow-hidden flex items-center justify-center gap-2 font-semibold"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <>
+                          <svg className="animate-spin h-5 w-5 text-black" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          <span>Processing Payment...</span>
+                        </>
+                      ) : method === 'cod' ? (
+                        <span>Place Order</span>
+                      ) : (
+                        <span>Pay ${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </div>
           </>
         )}
       </div>

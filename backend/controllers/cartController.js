@@ -142,12 +142,19 @@ module.exports.deleteManyFromCart = async (req, res) => {
 };
 
 module.exports.checkoutCart = async (req, res) => {
-    const { items, totalAmount, paymentMethod } = req.body;
+    const { items, totalAmount, paymentMethod, shippingAddress } = req.body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
         return res.status(400).json({
             success: false,
             message: "No items selected for checkout"
+        });
+    }
+
+    if (!shippingAddress || !shippingAddress.fullName || !shippingAddress.street || !shippingAddress.city || !shippingAddress.state || !shippingAddress.zipCode) {
+        return res.status(400).json({
+            success: false,
+            message: "A complete shipping address is required"
         });
     }
 
@@ -213,6 +220,7 @@ module.exports.checkoutCart = async (req, res) => {
             })),
             totalAmount: Number(totalAmount),
             paymentMethod: paymentMethod || "card",
+            shippingAddress,
             status,
             paymentStatus,
             createdAt: new Date()

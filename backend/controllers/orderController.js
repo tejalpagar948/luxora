@@ -41,6 +41,7 @@ module.exports.getAdminOrders = async (req, res) => {
       paymentMethod: order.paymentMethod,
       status: order.status,
       paymentStatus: order.paymentStatus,
+      shippingAddress: order.shippingAddress,
       customer: {
         fullName: order.user ? order.user.fullName : 'Anonymous',
         email: order.user ? order.user.email : '',
