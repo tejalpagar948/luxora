@@ -31,9 +31,15 @@ app.use(expressSession(
   }
 ))
 app.use(flash());
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://luxora-flax-theta.vercel.app",
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: "http://localhost:5173", // Next.js
+    origin: allowedOrigins,
     credentials: true,
   })
 );
