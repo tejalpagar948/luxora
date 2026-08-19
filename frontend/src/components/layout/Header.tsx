@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Container } from './Container';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../hooks/useCart';
@@ -7,6 +7,7 @@ import { useCart } from '../../hooks/useCart';
 export const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   const { cart } = useCart();
 
@@ -27,7 +28,7 @@ export const Header: React.FC = () => {
     : [
       { name: 'Home', path: '/' },
       { name: 'Collections', path: '/collections' },
-      ...(!user?.isAdmin ? [{ name: 'Cart', path: '/cart' }] : []),
+      { name: 'The Craft', path: '/#craft' },
       ...(user?.isAdmin ? [{ name: 'Admin', path: '/admin' }] : []),
     ];
 
@@ -60,12 +61,35 @@ export const Header: React.FC = () => {
         <div className="hidden md:block">
           <nav className="flex space-x-8 font-body text-label-caps items-center">
             {links.map((link) => {
-              const isActive = location.pathname === link.path;
+              const isActive = (() => {
+                if (link.path.includes('#')) {
+                  const [path, hash] = link.path.split('#');
+                  return location.pathname === path && location.hash === `#${hash}`;
+                }
+                if (link.path === '/') {
+                  return location.pathname === '/' && !location.hash;
+                }
+                return location.pathname === link.path;
+              })();
               const isCart = link.name === 'Cart';
+
+              const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+                if (link.path.startsWith('/#')) {
+                  const hash = link.path.split('#')[1];
+                  const element = document.getElementById(hash);
+                  if (element && location.pathname === '/') {
+                    e.preventDefault();
+                    element.scrollIntoView({ behavior: 'smooth' });
+                    navigate(link.path);
+                  }
+                }
+              };
+
               return (
                 <Link
                   key={link.name}
                   to={link.path}
+                  onClick={handleClick}
                   className={`uppercase tracking-widest text-[12px] hover:text-accent transition-colors duration-200 py-1 relative flex items-center gap-1.5 ${isActive ? 'text-accent' : 'text-primary'
                     }`}
                 >
@@ -88,7 +112,7 @@ export const Header: React.FC = () => {
         <div className="flex items-center space-x-5 md:space-x-6 font-body text-label-caps">
 
           {/* Shopping Cart Icon (visible only to non-admins) */}
-          {!user?.isAdmin && (
+          {!user?.isAdmin && isAuthenticated && (
             <Link
               to="/cart"
               className="relative p-1 text-primary hover:text-accent transition-colors duration-200 flex items-center"
@@ -143,12 +167,35 @@ export const Header: React.FC = () => {
         {isMenuOpen && (
           <div className="absolute top-[52px] left-[-20px] w-[calc(100%+40px)] bg-background/95 backdrop-blur-md border-b border-border-light shadow-lg py-8 px-6 flex flex-col space-y-4 z-40 md:hidden animate-slideDown">
             {links.map((link) => {
-              const isActive = location.pathname === link.path;
+              const isActive = (() => {
+                if (link.path.includes('#')) {
+                  const [path, hash] = link.path.split('#');
+                  return location.pathname === path && location.hash === `#${hash}`;
+                }
+                if (link.path === '/') {
+                  return location.pathname === '/' && !location.hash;
+                }
+                return location.pathname === link.path;
+              })();
+
+              const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+                setIsMenuOpen(false);
+                if (link.path.startsWith('/#')) {
+                  const hash = link.path.split('#')[1];
+                  const element = document.getElementById(hash);
+                  if (element && location.pathname === '/') {
+                    e.preventDefault();
+                    element.scrollIntoView({ behavior: 'smooth' });
+                    navigate(link.path);
+                  }
+                }
+              };
+
               return (
                 <Link
                   key={link.name}
                   to={link.path}
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={handleClick}
                   className={`font-body text-label-caps uppercase text-sm tracking-widest font-semibold transition-all duration-200 ${isActive
                     ? 'text-accent border-l-2 border-accent pl-3'
                     : 'text-primary hover:text-accent hover:pl-3'

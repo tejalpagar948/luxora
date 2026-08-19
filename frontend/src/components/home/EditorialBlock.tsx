@@ -4,7 +4,7 @@ import { Button } from '../ui/Button';
 
 export const EditorialBlock: React.FC = () => {
   return (
-    <section className="bg-background-alt py-[64px] md:py-[120px] border-y border-border-light">
+    <section id="craft" className="bg-background-alt py-[64px] md:py-[120px] border-y border-border-light">
       <Container>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-[80px] items-center">
           <div className="aspect-[4/5] rounded-lg overflow-hidden bg-secondary">
