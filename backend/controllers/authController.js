@@ -33,12 +33,14 @@ module.exports.registerUser = async (req, res) => {
                 const user = await userModel.create({ fullName, username, email, password: hash });
                 const token = generateToken(user);
                 
-                const isProduction = process.env.NODE_ENV === "production";
+                const isProduction =
+                    process.env.NODE_ENV === "production" ||
+                    process.env.VERCEL === "1";
                 res.cookie("token", token, {
                     httpOnly: true,
                     secure: isProduction,
                     sameSite: isProduction ? "none" : "lax",
-                    maxAge: 24 * 60 * 60 * 1000 // 1 day
+                    maxAge: 24 * 60 * 60 * 1000
                 });
 
                 res.status(201).json({
@@ -73,12 +75,14 @@ module.exports.loginUser = async (req, res) => {
         if (result) {
             const token = generateToken(user);
             
-            const isProduction = process.env.NODE_ENV === "production";
+            const isProduction =
+                process.env.NODE_ENV === "production" ||
+                process.env.VERCEL === "1";
             res.cookie("token", token, {
                 httpOnly: true,
                 secure: isProduction,
                 sameSite: isProduction ? "none" : "lax",
-                maxAge: 24 * 60 * 60 * 1000 // 1 day
+                maxAge: 24 * 60 * 60 * 1000
             });
 
             res.status(200).json({
