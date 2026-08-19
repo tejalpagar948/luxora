@@ -2,7 +2,6 @@ const express = require('express');
 require("dotenv").config()
 const cookieParser = require('cookie-parser');
 const path = require('path');
-const db = require("./config/mongoose-connection");
 const ownersRouter = require('./routes/ownersRouter');
 const productsRouter = require('./routes/productsRouter');
 const usersRouter = require('./routes/usersRouter');
@@ -85,6 +84,4 @@ app.use("/wishlist", wishlistRouter)
 //   });
 // });
 
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
-});
+module.exports = app;
