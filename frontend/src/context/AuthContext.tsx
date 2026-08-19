@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { loginUser, logoutUser, getUserProfile } from '../../services/authService';
+import { loginUser, loginAdmin as loginAdminService, logoutUser, getUserProfile } from '../../services/authService';
 
 export interface User {
   fullName: string;
@@ -16,6 +16,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   loading: boolean;
   login: (userData: any) => Promise<any>;
+  loginAdmin: (userData: any) => Promise<any>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
 }
@@ -57,6 +58,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginAdmin = async (userData: any) => {
+    try {
+      const res = await loginAdminService(userData);
+      if (res.data?.success) {
+        await checkAuth();
+      }
+      return res;
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const logout = async () => {
     try {
       await logoutUser();
@@ -74,6 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!user,
         loading,
         login,
+        loginAdmin,
         logout,
         checkAuth,
       }}
