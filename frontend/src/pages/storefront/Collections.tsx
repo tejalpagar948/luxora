@@ -11,7 +11,7 @@ const CATEGORIES = [
   { label: 'Crossbody', value: 'Crossbody Bag' },
   { label: 'Handbags', value: 'Handbag' },
   { label: 'Clutches', value: 'Clutch' },
-  { label: 'Travel', value: 'Travel' },
+  { label: 'Travel', value: 'Travel'    },
   { label: 'Accessories', value: 'Accessories' },
   { label: 'Pouches', value: 'Pouch' },
 ];

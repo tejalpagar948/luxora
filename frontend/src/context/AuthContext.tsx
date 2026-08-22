@@ -28,15 +28,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState<boolean>(true);
 
   const checkAuth = async () => {
+    if (localStorage.getItem('userLoggedIn') !== 'true') {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
     try {
       const res = await getUserProfile();
       if (res.data?.success && res.data?.data) {
         setUser(res.data.data);
       } else {
         setUser(null);
+        localStorage.removeItem('userLoggedIn');
       }
     } catch (error) {
       setUser(null);
+      localStorage.removeItem('userLoggedIn');
     } finally {
       setLoading(false);
     }
@@ -50,6 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const res = await loginUser(userData);
       if (res.data?.success) {
+        localStorage.setItem('userLoggedIn', 'true');
         await checkAuth();
       }
       return res;
@@ -62,6 +70,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const res = await loginAdminService(userData);
       if (res.data?.success) {
+        localStorage.setItem('userLoggedIn', 'true');
         await checkAuth();
       }
       return res;
@@ -76,6 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {
+      localStorage.removeItem('userLoggedIn');
       setUser(null);
     }
   };
