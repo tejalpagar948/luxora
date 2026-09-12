@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getAdminOrders } from '../../../services/adminService';
+import api from '../../../services/api';
 
 interface HealthData {
   status: string;
@@ -42,16 +43,12 @@ export const Dashboard: React.FC = () => {
   useEffect(() => {
     const checkBackendHealth = async () => {
       try {
-        const response = await fetch('http://localhost:3000/shop');
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data: HealthData = await response.json();
-        setHealthInfo(data);
+        const response = await api.get('/health');
+        setHealthInfo(response.data);
         setBackendStatus('online');
       } catch (err: any) {
         setBackendStatus('offline');
-        setErrorDetails(err.message || 'Could not connect to localhost:3000');
+        setErrorDetails(err.message || 'Could not connect to backend server');
       }
     };
 
@@ -150,7 +147,9 @@ export const Dashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-background-alt p-4 rounded-md">
             <span className="block text-xs text-neutral-400 uppercase tracking-wider mb-1">Backend API URL</span>
-            <span className="text-sm font-semibold text-primary break-all">http://localhost:3000/shop</span>
+            <span className="text-sm font-semibold text-primary break-all">
+              {api.defaults.baseURL ? `${api.defaults.baseURL}/health` : 'http://localhost:3000/health'}
+            </span>
           </div>
           <div className="bg-background-alt p-4 rounded-md">
             <span className="block text-xs text-neutral-400 uppercase tracking-wider mb-1">Database Status</span>
