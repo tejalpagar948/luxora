@@ -144,7 +144,7 @@ module.exports.deleteManyFromCart = async (req, res) => {
 };
 
 module.exports.checkoutCart = async (req, res) => {
-    const { items, totalAmount, paymentMethod, shippingAddress } = req.body;
+    const { items, totalAmount, paymentMethod, shippingAddress, razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
         return res.status(400).json({
@@ -216,6 +216,9 @@ module.exports.checkoutCart = async (req, res) => {
                         shippingAddress,
                         status,
                         paymentStatus,
+                        razorpayOrderId: razorpayOrderId || null,
+                        razorpayPaymentId: razorpayPaymentId || null,
+                        razorpaySignature: razorpaySignature || null,
                         createdAt: new Date()
                     }
                 ],

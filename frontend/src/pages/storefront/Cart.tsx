@@ -38,13 +38,16 @@ export const Cart: React.FC = () => {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [isPaymentOpen, setIsPaymentOpen] = useState<boolean>(false);
 
-  const handlePaymentSuccess = async (paymentMethod: string, shippingAddress: any) => {
+  const handlePaymentSuccess = async (paymentMethod: string, shippingAddress: any, paymentDetails?: any) => {
     try {
       await checkoutCart({
         items: selectedItems,
         totalAmount: total,
         paymentMethod,
         shippingAddress,
+        razorpayOrderId: paymentDetails?.razorpayOrderId,
+        razorpayPaymentId: paymentDetails?.razorpayPaymentId,
+        razorpaySignature: paymentDetails?.razorpaySignature,
       });
       await fetchCart();
       toast.success('Payment received! Your order is being processed.', {

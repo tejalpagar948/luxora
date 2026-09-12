@@ -60,6 +60,18 @@ const orderSchema = mongoose.Schema({
         default: 'Pending',
         required: true
     },
+    razorpayOrderId: {
+        type: String,
+        default: null
+    },
+    razorpayPaymentId: {
+        type: String,
+        default: null
+    },
+    razorpaySignature: {
+        type: String,
+        default: null
+    },
     shippingAddress: {
         fullName: { type: String, required: true },
         phone: { type: String, required: true },

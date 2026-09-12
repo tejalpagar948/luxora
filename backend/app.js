@@ -9,6 +9,7 @@ const indexRouter = require('./routes/indexRouter');
 const cartRouter = require('./routes/cartRouter');
 const wishlistRouter = require('./routes/wishlistRouter');
 const ordersRouter = require('./routes/ordersRouter');
+const paymentRouter = require('./routes/paymentRouter');
 const flash = require("connect-flash");
 const expressSession = require("express-session");
 const ejs = require("ejs");
@@ -50,6 +51,8 @@ app.use("/users", usersRouter)
 app.use("/cart", isLoggedin, cartRouter)
 app.use("/wishlist", wishlistRouter)
 app.use("/orders", isLoggedin, ordersRouter)
+app.use("/payment", paymentRouter)
+app.use("/api", paymentRouter)
 
 
 // Enable Simple Inline CORS for frontend connection

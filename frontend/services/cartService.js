@@ -20,6 +20,6 @@ export const deleteManyFromCart = (ids) => {
     return api.post(`/cart/delete-many`, { ids })
 }
 
-export const checkoutCart = ({ items, totalAmount, paymentMethod, shippingAddress }) => {
-    return api.post(`/cart/checkout`, { items, totalAmount, paymentMethod, shippingAddress })
+export const checkoutCart = ({ items, totalAmount, paymentMethod, shippingAddress, razorpayOrderId, razorpayPaymentId, razorpaySignature }) => {
+    return api.post(`/cart/checkout`, { items, totalAmount, paymentMethod, shippingAddress, razorpayOrderId, razorpayPaymentId, razorpaySignature });
 }

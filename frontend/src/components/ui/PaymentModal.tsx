@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from './Button';
+import { useAuth } from '../../context/AuthContext';
+import { toast } from 'react-hot-toast';
+import { createRazorpayOrder, verifyRazorpayPayment } from '../../../services/paymentService';
 
 interface Product {
   _id: string;
@@ -22,7 +25,7 @@ interface PaymentModalProps {
   selectedItems: CartLine[];
   subtotal: number;
   shipping: number;
-  onPaymentSuccess: (method: PaymentMethod, shippingAddress: any) => void;
+  onPaymentSuccess: (method: PaymentMethod, shippingAddress: any, paymentDetails?: any) => void;
 }
 
 type PaymentMethod = 'card' | 'upi' | 'netbanking' | 'cod';
@@ -35,66 +38,27 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   shipping,
   onPaymentSuccess,
 }) => {
+  const { user } = useAuth();
   const [checkoutStep, setCheckoutStep] = useState<'shipping' | 'payment'>('shipping');
   const [method, setMethod] = useState<PaymentMethod>('card');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
   // Shipping form states
-  const [shippingName, setShippingName] = useState('');
-  const [shippingPhone, setShippingPhone] = useState('');
+  const [shippingName, setShippingName] = useState(user?.fullName || '');
+  const [shippingPhone, setShippingPhone] = useState(user?.mobile ? String(user.mobile) : '');
   const [shippingStreet, setShippingStreet] = useState('');
   const [shippingCity, setShippingCity] = useState('');
   const [shippingState, setShippingState] = useState('');
   const [shippingZip, setShippingZip] = useState('');
   const [shippingCountry, setShippingCountry] = useState('USA');
 
-  // Form states
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiry, setExpiry] = useState('');
-  const [cvv, setCvv] = useState('');
-  const [cardName, setCardName] = useState('');
-  const [upiId, setUpiId] = useState('');
-  const [selectedBank, setSelectedBank] = useState('');
   const [formError, setFormError] = useState('');
 
   if (!isOpen) return null;
 
   const tax = subtotal * 0.05; // 5% luxury tax
   const total = subtotal + shipping + tax;
-
-  const validateForm = (): boolean => {
-    setFormError('');
-    if (method === 'card') {
-      if (!cardNumber || cardNumber.replace(/\s/g, '').length < 16) {
-        setFormError('Please enter a valid 16-digit card number.');
-        return false;
-      }
-      if (!expiry || !expiry.includes('/')) {
-        setFormError('Please enter card expiry date (MM/YY).');
-        return false;
-      }
-      if (!cvv || cvv.length < 3) {
-        setFormError('Please enter a valid CVV.');
-        return false;
-      }
-      if (!cardName) {
-        setFormError('Please enter the cardholder name.');
-        return false;
-      }
-    } else if (method === 'upi') {
-      if (!upiId || !upiId.includes('@')) {
-        setFormError('Please enter a valid UPI ID (e.g. name@upi).');
-        return false;
-      }
-    } else if (method === 'netbanking') {
-      if (!selectedBank) {
-        setFormError('Please select a bank to continue.');
-        return false;
-      }
-    }
-    return true;
-  };
 
   const validateShipping = (): boolean => {
     setFormError('');
@@ -127,76 +91,187 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const handlePay = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
 
-    setLoading(true);
-    // Simulate payment API call
-    setTimeout(() => {
-      setLoading(false);
-      setSuccess(true);
-      // Wait for success screen animation to play, then trigger completion
+    if (method === 'cod') {
+      setLoading(true);
       setTimeout(() => {
-        onPaymentSuccess(method, {
-          fullName: shippingName,
-          phone: shippingPhone,
-          street: shippingStreet,
-          city: shippingCity,
-          state: shippingState,
-          zipCode: shippingZip,
-          country: shippingCountry,
+        setLoading(false);
+        setSuccess(true);
+        setTimeout(() => {
+          onPaymentSuccess('cod', {
+            fullName: shippingName,
+            phone: shippingPhone,
+            street: shippingStreet,
+            city: shippingCity,
+            state: shippingState,
+            zipCode: shippingZip,
+            country: shippingCountry,
+          });
+          onClose();
+          setSuccess(false);
+          setCheckoutStep('shipping');
+        }, 1500);
+      }, 800);
+      return;
+    }
+
+    // Razorpay Standard Checkout Flow
+    try {
+      setLoading(true);
+      setFormError('');
+
+      // Ensure Razorpay SDK script is loaded
+      if (typeof (window as any).Razorpay === 'undefined') {
+        await new Promise<void>((resolve, reject) => {
+          const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+          if (existingScript) {
+            existingScript.addEventListener('load', () => resolve());
+            existingScript.addEventListener('error', () => reject(new Error('Failed to load Razorpay SDK')));
+          } else {
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.async = true;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error('Failed to load Razorpay SDK. Please check your internet connection.'));
+            document.body.appendChild(script);
+          }
         });
-        onClose();
-        setSuccess(false);
-        setCheckoutStep('shipping'); // Reset step for future open
-      }, 2000);
-    }, 1800);
-  };
+      }
 
-  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '').substring(0, 16);
-    // Format card number with spaces every 4 digits
-    const formatted = value.match(/.{1,4}/g)?.join(' ') || value;
-    setCardNumber(formatted);
-  };
+      // STEP 1: BACKEND - Create Order
+      // Minimum amount: 100 paise
+      const amountInPaise = Math.max(100, Math.round(total * 100));
+      const orderRes = await createRazorpayOrder({
+        amount: amountInPaise,
+        currency: 'INR',
+        receipt: `rcpt_${Date.now()}`,
+      });
 
-  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '').substring(0, 4);
-    if (value.length >= 2) {
-      setExpiry(`${value.slice(0, 2)}/${value.slice(2)}`);
-    } else {
-      setExpiry(value);
+      if (!orderRes.data?.success || !orderRes.data?.order_id) {
+        throw new Error(orderRes.data?.message || 'Failed to initialize payment with Razorpay');
+      }
+
+      const { order_id, amount, currency } = orderRes.data;
+      const keyId = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_Tb8xXzTA9e42vY';
+
+      // STEP 2: FRONTEND - Checkout Options
+      const options = {
+        key: keyId,
+        amount,
+        currency: currency || 'INR',
+        name: 'Luxora',
+        description: 'Order Checkout',
+        image: 'https://via.placeholder.com/128/141414/D4AF37?text=LUXORA',
+        order_id,
+        prefill: {
+          name: shippingName,
+          contact: shippingPhone,
+          email: user?.email || '',
+          method: method,
+        },
+        theme: {
+          color: '#D4AF37', // Signature Luxora Gold
+        },
+        handler: async (response: any) => {
+          try {
+            setLoading(true);
+            // STEP 3: BACKEND - Verify Signature
+            const verifyRes = await verifyRazorpayPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+
+            if (verifyRes.data?.success) {
+              setLoading(false);
+              setSuccess(true);
+              setTimeout(() => {
+                onPaymentSuccess(
+                  method,
+                  {
+                    fullName: shippingName,
+                    phone: shippingPhone,
+                    street: shippingStreet,
+                    city: shippingCity,
+                    state: shippingState,
+                    zipCode: shippingZip,
+                    country: shippingCountry,
+                  },
+                  {
+                    razorpayOrderId: response.razorpay_order_id,
+                    razorpayPaymentId: response.razorpay_payment_id,
+                    razorpaySignature: response.razorpay_signature,
+                  }
+                );
+                onClose();
+                setSuccess(false);
+                setCheckoutStep('shipping');
+              }, 1500);
+            } else {
+              setLoading(false);
+              const errMsg = verifyRes.data?.message || 'Payment signature verification failed.';
+              setFormError(errMsg);
+              toast.error(errMsg);
+            }
+          } catch (verifyErr: any) {
+            console.error('Signature verification error:', verifyErr);
+            setLoading(false);
+            const errMsg = verifyErr.response?.data?.message || 'Payment verification failed.';
+            setFormError(errMsg);
+            toast.error(errMsg);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setLoading(false);
+            toast.error('Payment checkout was cancelled.');
+          },
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', (response: any) => {
+        setLoading(false);
+        const failReason = response.error?.description || response.error?.reason || 'Payment failed';
+        setFormError(failReason);
+        toast.error(`Payment failed: ${failReason}`);
+      });
+
+      rzp.open();
+    } catch (err: any) {
+      console.error('Razorpay checkout error:', err);
+      setLoading(false);
+      const errMsg = err.response?.data?.message || err.message || 'Failed to initiate Razorpay checkout.';
+      setFormError(errMsg);
+      toast.error(errMsg);
     }
   };
-
-  console.log("selectedItems", selectedItems, subtotal);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md px-4 overflow-y-auto">
       <div className="bg-[#141414] border border-neutral-800 rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col md:grid md:grid-cols-12 max-h-[90vh] md:max-h-[85vh] animate-fade-in relative text-neutral-200">
-
         {/* Close Button */}
         <button
           onClick={onClose}
           disabled={loading || success}
-          type="button"
-          className="absolute top-4 right-4 z-10 text-neutral-400 hover:text-white p-2 rounded-full hover:bg-neutral-800/50 transition-colors"
+          className="absolute top-4 right-4 z-10 text-neutral-400 hover:text-white transition-colors cursor-pointer bg-neutral-900/80 hover:bg-neutral-800 p-2 rounded-full border border-neutral-800"
           aria-label="Close modal"
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
 
+        {/* Success Screen Overlay */}
         {success ? (
-          /* Payment Success View */
-          <div className="col-span-12 flex flex-col items-center justify-center p-12 text-center bg-[#141414] min-h-[500px]">
-            <div className="w-20 h-20 rounded-full border-4 border-[#D4AF37] flex items-center justify-center mb-6 animate-scale-up">
-              <svg className="w-10 h-10 text-[#D4AF37]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+          <div className="col-span-12 p-12 flex flex-col items-center justify-center min-h-[450px] text-center">
+            <div className="w-16 h-16 bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30 rounded-full flex items-center justify-center mb-6 animate-bounce">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="font-display text-2xl text-white font-semibold mb-2">
-              Payment Successful
+            <h2 className="font-display text-2xl text-white font-bold tracking-wider mb-2">
+              Payment Confirmed!
             </h2>
             <p className="text-neutral-400 text-sm max-w-sm mb-4">
               Your luxury order is secured and is being prepared for fulfillment.
@@ -270,7 +345,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     <h3 className="font-display text-lg text-white font-semibold tracking-wide mb-6">
                       Shipping Address
                     </h3>
-                    
+
                     {formError && (
                       <div className="mb-4 text-xs text-red-400 bg-red-950/30 border border-red-900 rounded p-2.5">
                         {formError}
@@ -299,7 +374,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                             type="text"
                             value={shippingPhone}
                             onChange={(e) => setShippingPhone(e.target.value)}
-                            placeholder="e.g. +1 555 123 4567"
+                            placeholder="e.g. +91 98765 43210"
                             className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
                           />
                         </div>
@@ -327,7 +402,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                             type="text"
                             value={shippingCity}
                             onChange={(e) => setShippingCity(e.target.value)}
-                            placeholder="e.g. New York"
+                            placeholder="e.g. Mumbai / New York"
                             className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
                           />
                         </div>
@@ -339,7 +414,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                             type="text"
                             value={shippingState}
                             onChange={(e) => setShippingState(e.target.value)}
-                            placeholder="e.g. NY"
+                            placeholder="e.g. Maharashtra / NY"
                             className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
                           />
                         </div>
@@ -354,7 +429,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                             type="text"
                             value={shippingZip}
                             onChange={(e) => setShippingZip(e.target.value)}
-                            placeholder="e.g. 10001"
+                            placeholder="e.g. 400001"
                             className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
                           />
                         </div>
@@ -366,7 +441,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                             type="text"
                             value={shippingCountry}
                             onChange={(e) => setShippingCountry(e.target.value)}
-                            placeholder="e.g. USA"
+                            placeholder="e.g. India"
                             className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
                           />
                         </div>
@@ -451,8 +526,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       ))}
                     </div>
 
-                    {/* Form Fields */}
-                    <div className="bg-[#1A1A1A] border border-neutral-800 rounded-lg p-5 min-h-[180px] flex flex-col justify-center">
+                    {/* Method Description / Razorpay Gateway Card */}
+                    <div className="bg-[#1A1A1A] border border-neutral-800 rounded-lg p-5 min-h-[160px] flex flex-col justify-center">
                       {formError && (
                         <div className="mb-4 text-xs text-red-400 bg-red-950/30 border border-red-900 rounded p-2.5">
                           {formError}
@@ -460,121 +535,64 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       )}
 
                       {method === 'card' && (
-                        <div className="space-y-4">
-                          <div>
-                            <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1 font-semibold">
-                              Cardholder Name
-                            </label>
-                            <input
-                              type="text"
-                              required
-                              value={cardName}
-                              onChange={(e) => setCardName(e.target.value)}
-                              placeholder="e.g. John Doe"
-                              className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
-                            />
+                        <div className="space-y-3 text-center py-2">
+                          <div className="w-10 h-10 mx-auto rounded-full bg-[#D4AF37]/10 text-[#D4AF37] flex items-center justify-center">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                            </svg>
                           </div>
-                          <div>
-                            <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1 font-semibold">
-                              Card Number
-                            </label>
-                            <input
-                              type="text"
-                              required
-                              value={cardNumber}
-                              onChange={handleCardNumberChange}
-                              placeholder="0000 0000 0000 0000"
-                              className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
-                            />
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1 font-semibold">
-                                Expiry Date
-                              </label>
-                              <input
-                                type="text"
-                                required
-                                value={expiry}
-                                onChange={handleExpiryChange}
-                                placeholder="MM/YY"
-                                className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1 font-semibold">
-                                CVV
-                              </label>
-                              <input
-                                type="password"
-                                required
-                                value={cvv}
-                                onChange={(e) => setCvv(e.target.value.replace(/\D/g, '').substring(0, 4))}
-                                placeholder="123"
-                                className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
-                              />
-                            </div>
-                          </div>
+                          <h4 className="text-sm font-semibold text-white">Credit / Debit Card Checkout</h4>
+                          <p className="text-xs text-neutral-400 max-w-sm mx-auto leading-relaxed">
+                            Pay securely with Visa, MasterCard, RuPay, Maestro, or Amex via the official Razorpay payment modal.
+                          </p>
                         </div>
                       )}
 
                       {method === 'upi' && (
-                        <div className="space-y-4">
-                          <div>
-                            <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1 font-semibold">
-                              UPI ID
-                            </label>
-                            <input
-                              type="text"
-                              required
-                              value={upiId}
-                              onChange={(e) => setUpiId(e.target.value)}
-                              placeholder="e.g. name@bank"
-                              className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] placeholder-neutral-600 transition-colors"
-                            />
+                        <div className="space-y-3 text-center py-2">
+                          <div className="w-10 h-10 mx-auto rounded-full bg-[#D4AF37]/10 text-[#D4AF37] flex items-center justify-center font-bold text-xs tracking-wider">
+                            UPI
                           </div>
-                          <p className="text-[11px] text-neutral-500 leading-relaxed">
-                            A payment request will be sent to your UPI app. Open the app to complete the checkout.
+                          <h4 className="text-sm font-semibold text-white">Instant UPI Payment</h4>
+                          <p className="text-xs text-neutral-400 max-w-sm mx-auto leading-relaxed">
+                            Pay with Google Pay, PhonePe, Paytm, BHIM, or your personal UPI ID / QR code in the Razorpay checkout modal.
                           </p>
                         </div>
                       )}
 
                       {method === 'netbanking' && (
-                        <div className="space-y-4">
-                          <div>
-                            <label className="block text-[10px] uppercase tracking-wider text-neutral-400 mb-1 font-semibold">
-                              Select Bank
-                            </label>
-                            <select
-                              value={selectedBank}
-                              onChange={(e) => setSelectedBank(e.target.value)}
-                              className="w-full bg-[#121212] border border-neutral-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D4AF37] transition-colors"
-                            >
-                              <option value="">-- Choose your Bank --</option>
-                              <option value="chase">JPMorgan Chase</option>
-                              <option value="bofa">Bank of America</option>
-                              <option value="wells">Wells Fargo</option>
-                              <option value="citigroup">Citigroup</option>
-                              <option value="capone">Capital One</option>
-                            </select>
+                        <div className="space-y-3 text-center py-2">
+                          <div className="w-10 h-10 mx-auto rounded-full bg-[#D4AF37]/10 text-[#D4AF37] flex items-center justify-center">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
                           </div>
-                          <p className="text-[11px] text-neutral-500 leading-relaxed">
-                            You will be redirected to your bank's secure page to complete the transaction.
+                          <h4 className="text-sm font-semibold text-white">Net Banking</h4>
+                          <p className="text-xs text-neutral-400 max-w-sm mx-auto leading-relaxed">
+                            Select from 50+ supported Indian banks (HDFC, ICICI, SBI, Axis, Kotak, etc.) inside the Razorpay gateway.
                           </p>
                         </div>
                       )}
 
                       {method === 'cod' && (
-                        <div className="text-center py-4">
-                          <span className="text-sm font-semibold text-white block mb-1">
-                            Cash on Delivery
-                          </span>
-                          <p className="text-[11px] text-neutral-400 max-w-sm mx-auto leading-relaxed">
-                            Pay with cash upon receipt. No pre-payment information is required. An additional verification step might occur on arrival.
+                        <div className="space-y-2 text-center py-2">
+                          <span className="text-sm font-semibold text-white block">Cash on Delivery</span>
+                          <p className="text-xs text-neutral-400 max-w-sm mx-auto leading-relaxed">
+                            Pay with cash upon receipt. No advance online payment is required.
                           </p>
                         </div>
                       )}
                     </div>
+
+                    {/* Razorpay Trust Badge */}
+                    {method !== 'cod' && (
+                      <div className="flex items-center justify-center gap-2 text-[11px] text-neutral-400 mt-4">
+                        <svg className="w-3.5 h-3.5 text-[#D4AF37]" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clipRule="evenodd" />
+                        </svg>
+                        <span>Secured by <strong className="text-neutral-200">Razorpay</strong> · 256-Bit SSL Encryption</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Pay Button */}
@@ -591,12 +609,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                           </svg>
-                          <span>Processing Payment...</span>
+                          <span>Connecting to Razorpay...</span>
                         </>
                       ) : method === 'cod' ? (
-                        <span>Place Order</span>
+                        <span>Place Order (Cash on Delivery)</span>
                       ) : (
-                        <span>Pay ${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                        <span>Pay ${total.toLocaleString(undefined, { minimumFractionDigits: 2 })} with Razorpay</span>
                       )}
                     </Button>
                   </div>
@@ -606,6 +624,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           </>
         )}
       </div>
-    </div >
+    </div>
   );
 };
