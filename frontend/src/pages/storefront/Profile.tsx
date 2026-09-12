@@ -4,25 +4,54 @@ import { toast } from 'react-hot-toast';
 import { Container } from '../../components/layout/Container';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../context/AuthContext';
-import { getWishlist, removeFromWishlist } from '../../../services/wishlistService';
-import { getUserProfile } from '../../../services/authService';
+import { getUserOrders } from '../../../services/orderService';
+import { useWishlist } from '../../hooks/useWishlist';
+import { useCancelOrder } from '../../hooks/useCancelOrder';
+import { CancelOrderModal } from '../../components/order/CancelOrderModal';
+
 
 export const Profile: React.FC = () => {
   const { user, loading, logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'orders' | 'wishlist'>('orders');
-  const [wishlist, setWishlist] = useState<any[]>([]);
-  const [wishlistLoading, setWishlistLoading] = useState<boolean>(false);
+  const { wishlist, removeFromWishlist } = useWishlist();
   const [orders, setOrders] = useState<any[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState<boolean>(false);
+  const { cancelOrder, loading: cancelLoading } = useCancelOrder();
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState<string | null>(null);
+
+  const handleCancelOrderConfirm = async (reason: string) => {
+    if (!orderToCancel) return;
+    const success = await cancelOrder(orderToCancel, reason);
+    if (success) {
+      setOrders(prevOrders =>
+        prevOrders.map(o =>
+          o._id === orderToCancel
+            ? {
+                ...o,
+                status: 'Cancelled',
+                cancellation: { reason: reason || 'order cancelled by user', cancelledAt: new Date().toISOString() }
+              }
+            : o
+        )
+      );
+      setIsCancelModalOpen(false);
+      setOrderToCancel(null);
+    }
+  };
 
   const fetchOrders = async () => {
+    setOrdersLoading(true);
     try {
-      const res = await getUserProfile();
-      if (res.data.success) {
-        setOrders(res.data.data?.orders || []);
+      const res = await getUserOrders();
+      if (res.data?.success) {
+        setOrders(res.data.data || []);
       }
     } catch (err) {
       console.error("Error fetching orders:", err);
+    } finally {
+      setOrdersLoading(false);
     }
   };
 
@@ -41,42 +70,9 @@ export const Profile: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      if (user.orders) {
-        setOrders(user.orders);
-      }
       fetchOrders();
-      fetchWishlist();
     }
   }, [user]);
-
-  const fetchWishlist = async () => {
-    setWishlistLoading(true);
-    try {
-      const res = await getWishlist();
-      if (res.data.success) {
-        setWishlist(res.data.wishlist || res.data.data || []);
-      }
-    } catch (err) {
-      console.error("Error fetching wishlist:", err);
-    } finally {
-      setWishlistLoading(false);
-    }
-  };
-
-  const handleRemoveFromWishlist = async (productId: string) => {
-    try {
-      const res = await removeFromWishlist(productId);
-      if (res.data.success) {
-        setWishlist(res.data.wishlist || res.data.data || []);
-        toast.success("Product removed from wishlist");
-      } else {
-        toast.error(res.data.message || "Failed to remove product");
-      }
-    } catch (err: any) {
-      console.error("Error removing product from wishlist:", err);
-      toast.error(err.response?.data?.message || "Failed to remove product");
-    }
-  };
 
   if (loading) {
     return (
@@ -190,28 +186,56 @@ export const Profile: React.FC = () => {
                 </div>
 
                 {activeTab === 'orders' ? (
-                  orders && orders.length > 0 ? (
+                  ordersLoading ? (
+                    <div className="py-12 text-center animate-fadeIn">
+                      <p className="text-sm text-neutral-400">Loading orders...</p>
+                    </div>
+                  ) : orders && orders.length > 0 ? (
                     <div className="space-y-4 animate-fadeIn">
                       {orders.map((order: any, idx: number) => (
-                        <div key={idx} className="border border-border-light rounded-xl p-5 bg-background-alt flex justify-between items-center hover:shadow-md transition-all duration-300">
-                          <div>
-                            <p className="text-sm font-semibold text-primary font-display">Order #{order._id ? order._id.slice(-6).toUpperCase() : idx + 1}</p>
-                            <p className="text-xs text-neutral-400 mt-0.5">{new Date(order.createdAt).toLocaleDateString()}</p>
-                            <span className={`inline-block border text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider mt-2.5 ${order.status === 'Pending'
-                              ? 'bg-amber-50 text-amber-700 border-amber-200'
-                              : order.status === 'Cancelled'
-                                ? 'bg-red-50 text-red-700 border-red-200'
-                                : order.status === 'Shipped'
-                                  ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                  : order.status === 'Delivered'
-                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                    : 'bg-green-50 text-green-700 border-green-200'
-                              }`}>
-                              {order.status || 'Paid & Processing'}
-                            </span>
+                        <Link
+                          key={order._id || idx}
+                          to={`/profile/orders/${order._id}`}
+                          className="block"
+                        >
+                          <div className="border border-border-light rounded-xl p-5 bg-background-alt flex justify-between items-center hover:shadow-md hover:border-accent/30 transition-all duration-300 cursor-pointer">
+                            <div>
+                              <p className="text-sm font-semibold text-primary font-display">Order #{order._id ? order._id.slice(-6).toUpperCase() : idx + 1}</p>
+                              <p className="text-xs text-neutral-400 mt-0.5">{new Date(order.createdAt).toLocaleDateString()}</p>
+                              <div className="flex flex-wrap items-center gap-3 mt-2">
+                                <span className={`inline-block border text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${order.status === 'Pending'
+                                  ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                  : order.status === 'Cancelled'
+                                    ? 'bg-red-50 text-red-700 border-red-200'
+                                    : order.status === 'Shipped'
+                                      ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                      : order.status === 'Delivered'
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                        : 'bg-green-50 text-green-700 border-green-200'
+                                  }`}>
+                                  {order.status || 'Paid & Processing'}
+                                </span>
+
+                                {order.status === 'Pending' && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      setOrderToCancel(order._id);
+                                      setIsCancelModalOpen(true);
+                                    }}
+                                    className="text-[9px] font-bold uppercase tracking-wider text-red-700 hover:text-red-800 transition-colors duration-150 cursor-pointer border border-red-200 hover:border-red-300 rounded-full px-2.5 py-0.5 bg-red-50"
+                                  >
+                                    Cancel Order
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="text-base font-bold text-accent">${order.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            </div>
                           </div>
-                          <span className="text-base font-bold text-accent">${order.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                        </div>
+                        </Link>
                       ))}
                     </div>
                   ) : (
@@ -225,11 +249,7 @@ export const Profile: React.FC = () => {
                     </div>
                   )
                 ) : (
-                  wishlistLoading ? (
-                    <div className="py-12 text-center">
-                      <p className="text-sm text-neutral-400">Loading wishlist...</p>
-                    </div>
-                  ) : wishlist.length > 0 ? (
+                  wishlist.length > 0 ? (
                     <div className="space-y-4 animate-fadeIn">
                       {wishlist.map((product: any) => (
                         <div key={product._id} className="border border-border-light rounded-xl p-4 bg-background-alt flex items-center gap-4 hover:shadow-md transition-all duration-300">
@@ -250,7 +270,7 @@ export const Profile: React.FC = () => {
                             <Button
                               variant="outline"
                               className="!py-1.5 !px-2.5 text-[9px] uppercase tracking-wider font-semibold font-body rounded-md border-red-200 hover:bg-red-50 hover:text-red-600 text-red-500 hover:border-red-600"
-                              onClick={() => handleRemoveFromWishlist(product._id)}
+                              onClick={() => removeFromWishlist(product._id)}
                             >
                               Remove
                             </Button>
@@ -274,6 +294,16 @@ export const Profile: React.FC = () => {
           </div>
         </div>
       </Container>
+
+      <CancelOrderModal
+        isOpen={isCancelModalOpen}
+        onClose={() => {
+          setIsCancelModalOpen(false);
+          setOrderToCancel(null);
+        }}
+        onConfirm={handleCancelOrderConfirm}
+        isLoading={cancelLoading}
+      />
     </div>
   );
 };

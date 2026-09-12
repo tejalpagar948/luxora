@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { getWishlist, addToWishlist, removeFromWishlist } from '../../../services/wishlistService';
+import { useWishlist } from '../../hooks/useWishlist';
 import { toast } from 'react-hot-toast';
 
 export interface Product {
@@ -22,26 +22,10 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
-  const [isFavorite, setIsFavorite] = useState(false);
+  const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const [favLoading, setFavLoading] = useState(false);
 
-  useEffect(() => {
-    const checkFavoriteStatus = async () => {
-      if (isAuthenticated) {
-        try {
-          const res = await getWishlist();
-          if (res.data?.success) {
-            const list = res.data.wishlist || res.data.data || [];
-            const exists = list.some((item: any) => item._id === product._id || item === product._id);
-            setIsFavorite(exists);
-          }
-        } catch (err) {
-          console.error("Error checking favorite status on card:", err);
-        }
-      }
-    };
-    checkFavoriteStatus();
-  }, [product._id, isAuthenticated]);
+  const isFavorite = wishlist.some((item) => item._id === product._id);
 
   const handleFavoriteToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -58,21 +42,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
     try {
       if (isFavorite) {
-        const res = await removeFromWishlist(product._id);
-        if (res.data?.success) {
-          setIsFavorite(false);
-          toast.success("Removed from wishlist");
-        }
+        await removeFromWishlist(product._id);
       } else {
-        const res = await addToWishlist(product._id);
-        if (res.data?.success) {
-          setIsFavorite(true);
-          toast.success("Added to wishlist");
-        }
+        await addToWishlist(product._id);
       }
     } catch (err) {
       console.error("Wishlist toggle error on card:", err);
-      toast.error("Failed to update wishlist");
     } finally {
       setFavLoading(false);
     }

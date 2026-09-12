@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
 import { Container } from '../../components/layout/Container';
 import { ProductGallery } from '../../components/product/ProductGallery';
 import { Button } from '../../components/ui/Button';
 import { getSingleProduct } from '../../../services/productService';
-import { getWishlist, addToWishlist, removeFromWishlist } from '../../../services/wishlistService';
 import { useCart } from '../../hooks/useCart';
 import { useAuth } from '../../context/AuthContext';
+import { useWishlist } from '../../hooks/useWishlist';
 import { redirectToLogin } from '../../../utils/redirectToLogin';
 
 // const PRODUCTS_MAP: Record<string, {
@@ -90,27 +89,11 @@ export const ProductDetails: React.FC = () => {
   const isAddedToCart = !!cartItem;
   const cartQuantity = cartItem ? cartItem.quantity : 0;
   const { isAuthenticated, user } = useAuth();
+  const { wishlist, addToWishlist, removeFromWishlist } = useWishlist();
 
-  const [isInWishlist, setIsInWishlist] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
 
-  useEffect(() => {
-    const checkWishlist = async () => {
-      if (isAuthenticated && product_id) {
-        try {
-          const res = await getWishlist();
-          if (res.data.success) {
-            const list = res.data.wishlist || res.data.data || [];
-            const exists = list.some((item: any) => item._id === product_id || item === product_id);
-            setIsInWishlist(exists);
-          }
-        } catch (err) {
-          console.error("Error checking wishlist:", err);
-        }
-      }
-    };
-    checkWishlist();
-  }, [product_id, isAuthenticated]);
+  const isInWishlist = wishlist.some((item) => item._id === product_id);
 
   const handleWishlistToggle = async () => {
     if (!isAuthenticated) {
@@ -122,25 +105,12 @@ export const ProductDetails: React.FC = () => {
     setWishlistLoading(true);
     try {
       if (isInWishlist) {
-        const res = await removeFromWishlist(product_id);
-        if (res.data.success) {
-          setIsInWishlist(false);
-          toast.success("Removed from wishlist");
-        } else {
-          toast.error(res.data.message || "Failed to update wishlist");
-        }
+        await removeFromWishlist(product_id);
       } else {
-        const res = await addToWishlist(product_id);
-        if (res.data.success) {
-          setIsInWishlist(true);
-          toast.success("Added to wishlist");
-        } else {
-          toast.error(res.data.message || "Failed to update wishlist");
-        }
+        await addToWishlist(product_id);
       }
     } catch (err: any) {
       console.error("Wishlist toggle error:", err);
-      toast.error(err.response?.data?.message || "Failed to update wishlist");
     } finally {
       setWishlistLoading(false);
     }

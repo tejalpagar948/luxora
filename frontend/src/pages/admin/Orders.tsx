@@ -245,14 +245,18 @@ const OrderRow: React.FC<{
 export const Orders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isFetching, setIsFetching] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
 
-  const fetchOrders = async (pageToFetch = currentPage) => {
+  const fetchOrders = async (pageToFetch = currentPage, showInitialLoading = false) => {
     try {
-      setLoading(true);
+      if (showInitialLoading) {
+        setLoading(true);
+      }
+      setIsFetching(true);
       setError('');
       const res = await getAdminOrders({ page: pageToFetch, limit: 10 });
       if (res.data?.success) {
@@ -269,11 +273,12 @@ export const Orders: React.FC = () => {
       setError(err.response?.data?.message || 'Something went wrong while loading orders.');
     } finally {
       setLoading(false);
+      setIsFetching(false);
     }
   };
 
   useEffect(() => {
-    fetchOrders(currentPage);
+    fetchOrders(currentPage, currentPage === 1 && orders.length === 0);
   }, [currentPage]);
 
   const toggleExpandOrder = (id: string) => {
@@ -296,7 +301,7 @@ export const Orders: React.FC = () => {
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6">
         <div className="max-w-md text-center">
           <p className="font-body text-red-500 font-medium mb-4">{error}</p>
-          <Button variant="outline" onClick={() => fetchOrders(currentPage)}>
+          <Button variant="outline" onClick={() => fetchOrders(currentPage, true)}>
             Try Again
           </Button>
         </div>
@@ -338,7 +343,15 @@ export const Orders: React.FC = () => {
           </p>
         </div>
       ) : (
-        <div className="bg-background border border-border-light rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-background border border-border-light rounded-lg shadow-sm overflow-hidden relative">
+          {isFetching && (
+            <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center z-10 transition-all duration-200">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
+                <p className="font-body text-neutral-500 text-xs font-semibold uppercase tracking-wider">Updating...</p>
+              </div>
+            </div>
+          )}
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-neutral-500 border-collapse">
               <thead className="text-xs text-neutral-400 uppercase tracking-widest bg-background-alt border-b border-border-light">
@@ -368,14 +381,14 @@ export const Orders: React.FC = () => {
           </div>
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="flex justify-between items-center px-6 py-4 bg-background-alt border-t border-border-light font-body">
+            <div className="flex justify-between items-center px-6 py-4 bg-background-alt border-t border-border-light font-body select-none">
               <span className="text-xs text-neutral-400">
                 Page {currentPage} of {totalPages}
               </span>
               <div className="flex items-center space-x-2">
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
+                  disabled={currentPage === 1 || isFetching}
                   className="px-3 py-1 text-xs border border-border-light rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-neutral-50 font-semibold cursor-pointer transition-colors duration-150"
                 >
                   Previous
@@ -384,10 +397,11 @@ export const Orders: React.FC = () => {
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
+                    disabled={isFetching}
                     className={`px-2.5 py-1 text-xs border rounded font-semibold cursor-pointer transition-colors duration-150 ${
                       currentPage === page
                         ? 'bg-accent text-[#121212] border-accent'
-                        : 'border-border-light hover:bg-neutral-50 text-neutral-600'
+                        : 'border-border-light hover:bg-neutral-50 text-neutral-600 disabled:opacity-50 disabled:cursor-not-allowed'
                     }`}
                   >
                     {page}
@@ -395,7 +409,7 @@ export const Orders: React.FC = () => {
                 ))}
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
+                  disabled={currentPage === totalPages || isFetching}
                   className="px-3 py-1 text-xs border border-border-light rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-neutral-50 font-semibold cursor-pointer transition-colors duration-150"
                 >
                   Next

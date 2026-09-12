@@ -10,7 +10,7 @@ const orderSchema = mongoose.Schema({
         {
             product: {
                 type: mongoose.Schema.Types.ObjectId,
-                ref: "product",
+                ref: "Product",
                 required: true
             },
             title: {
@@ -44,6 +44,16 @@ const orderSchema = mongoose.Schema({
         default: 'Pending',
         required: true
     },
+    cancellation: {
+        reason: {
+            type: String,
+            default: null
+        },
+        cancelledAt: {
+            type: Date,
+            default: null
+        }
+    },
     paymentStatus: {
         type: String,
         enum: ['Pending', 'Paid', 'Failed', 'Refunded'],
@@ -66,6 +76,4 @@ const orderSchema = mongoose.Schema({
 });
 
 const orderModel = mongoose.model("order", orderSchema);
-mongoose.model("Order", orderSchema);
-
 module.exports = orderModel;

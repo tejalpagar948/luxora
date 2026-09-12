@@ -6,31 +6,19 @@ import { FormField } from '../../components/forms/FormField';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
-import { getUserProfile } from '../../../services/authService';
 
 export const AdminLogin: React.FC = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const navigate = useNavigate();
-  const { login, logout } = useAuth();
+  const { loginAdmin } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      await login(formData);
-      
-      // Fetch profile directly to verify administrative privileges
-      const profileRes = await getUserProfile();
-      const user = profileRes.data?.data;
-
-      if (user && user.isAdmin) {
-        toast.success("Welcome to the Admin Portal");
-        navigate("/admin");
-      } else {
-        // Not an admin, log out immediately to clear credentials/cookies
-        await logout();
-        toast.error("Access denied. You are not an administrator.");
-      }
+      await loginAdmin(formData);
+      toast.success("Welcome to the Admin Portal");
+      navigate("/admin");
     } catch (err: any) {
       console.error(err);
       toast.error(err.response?.data?.message || "Invalid Credentials");

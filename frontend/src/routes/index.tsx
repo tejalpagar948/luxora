@@ -15,6 +15,7 @@ import { Cart } from '../pages/storefront/Cart';
 import { Login } from '../pages/storefront/Login';
 import { Register } from '../pages/storefront/Register';
 import { Profile } from '../pages/storefront/Profile';
+import { OrderDetails } from '../pages/storefront/OrderDetails';
 
 // Admin Pages
 import { Dashboard } from '../pages/admin/Dashboard';
@@ -76,6 +77,7 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute />,
         children: [
           { path: "/profile", element: <Profile /> },
+          { path: "/profile/orders/:orderId", element: <OrderDetails /> },
           {
             element: <UserOnlyRoute />,
             children: [

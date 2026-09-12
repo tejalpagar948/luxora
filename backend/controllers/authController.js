@@ -1,6 +1,5 @@
 const bcrypt = require("bcrypt");
 const userModel = require("../models/user-model");
-const orderModel = require("../models/order-model");
 const { generateToken } = require("../utils/generateToken");
 
 module.exports.registerUser = async (req, res) => {
@@ -71,6 +70,14 @@ module.exports.loginUser = async (req, res) => {
         })
     }
 
+    if (user.isAdmin) {
+        return res.status(403).json({
+            success: false,
+            message: "Admins cannot log in through the user login portal. Please use the Admin Portal.",
+            error: "Admin access denied"
+        });
+    }
+
     bcrypt.compare(password, user.password, (err, result) => {
         if (result) {
             const token = generateToken(user);
@@ -87,6 +94,54 @@ module.exports.loginUser = async (req, res) => {
 
             res.status(200).json({
                 message: "User Logged In",
+                success: true
+            })
+        } else {
+            return res.status(404).json({
+                success: false,
+                message: "Invalid Credentials",
+                error: "Invalid Credentials"
+            })
+        }
+    })
+}
+
+module.exports.loginAdmin = async (req, res) => {
+    console.log("Admin Login API Hit");
+    const { email, password } = req.body;
+    let user = await userModel.findOne({ email: email })
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            message: "Admin Not Found",
+            error: "Admin Not Found"
+        })
+    }
+
+    if (!user.isAdmin) {
+        return res.status(403).json({
+            success: false,
+            message: "Access Denied: You are not an administrator.",
+            error: "Admin access denied"
+        });
+    }
+
+    bcrypt.compare(password, user.password, (err, result) => {
+        if (result) {
+            const token = generateToken(user);
+            
+            const isProduction =
+                process.env.NODE_ENV === "production" ||
+                process.env.VERCEL === "1";
+            res.cookie("token", token, {
+                httpOnly: true,
+                secure: isProduction,
+                sameSite: isProduction ? "none" : "lax",
+                maxAge: 24 * 60 * 60 * 1000
+            });
+
+            res.status(200).json({
+                message: "Admin Logged In",
                 success: true
             })
         } else {
@@ -126,8 +181,6 @@ module.exports.logoutUser = async (req, res) => {
 module.exports.getUserProfile = async (req, res) => {
     try {
         const userObj = req.user.toObject();
-        const orders = await orderModel.find({ user: req.user._id }).sort({ createdAt: -1 });
-        userObj.orders = orders;
         return res.status(200).json({
             success: true,
             data: userObj
@@ -136,4 +189,4 @@ module.exports.getUserProfile = async (req, res) => {
         console.error("Error in user profile route:", error);
         return res.status(500).json({ success: false, message: "Internal server error" });
     }
-};
+};

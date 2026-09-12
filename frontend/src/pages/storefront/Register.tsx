@@ -3,17 +3,24 @@ import { Container } from '../../components/layout/Container';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { FormField } from '../../components/forms/FormField';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { registerUser } from "../../../services/authService";
 import { toast } from 'react-hot-toast';
+import { useAuth } from "../../context/AuthContext";
 
 export const Register: React.FC = () => {
+  const navigate = useNavigate();
+  const { checkAuth } = useAuth();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const res = await registerUser(formData);
       console.log(res.data);
       toast.success(res.data.message);
+      localStorage.setItem('userLoggedIn', 'true');
+      await checkAuth();
+      navigate("/");
     } catch (error: any) {
       console.log(error);
       toast.error(error.response?.data?.message || "Something went wrong");

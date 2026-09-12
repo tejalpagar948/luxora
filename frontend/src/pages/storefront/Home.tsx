@@ -24,6 +24,7 @@ export const Home: React.FC = () => {
     const fetchFeaturedProducts = async () => {
       try {
         const res = await getProducts();
+        console.log("This is the api", res.data.data)
         if (res.data?.success) {
           const allProducts = res.data.data || [];
           if (allProducts.length > 0) {
