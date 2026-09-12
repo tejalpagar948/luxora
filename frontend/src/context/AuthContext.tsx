@@ -8,7 +8,6 @@ export interface User {
   mobile?: number;
   picture?: string;
   isAdmin: boolean;
-  orders?: any[];
 }
 
 interface AuthContextType {

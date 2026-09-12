@@ -3,6 +3,7 @@ const userModel = require("../models/user-model");
 
 module.exports = async (req, res, next) => {
     const token = req.cookies.token;
+
     if (!token) {
         return res.status(401).json({
             success: false,
@@ -12,12 +13,24 @@ module.exports = async (req, res, next) => {
 
     try {
         const decode = jwt.verify(token, process.env.JWT_KEY);
-        const user = await userModel.findOne({ email: decode.email }).select("-password");
+
+        const user = await userModel
+            .findOne({ email: decode.email })
+            .select("-password");
+
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized"
+            });
+        }
+
         req.user = user;
         next();
     } catch (error) {
-        req.flash("error", "You are not logged in")
-        res.redirect("/")
+        return res.status(401).json({
+            success: false,
+            message: "Unauthorized"
+        });
     }
-
-}
+};
