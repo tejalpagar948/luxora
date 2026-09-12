@@ -202,8 +202,8 @@ export const OrderDetails: React.FC = () => {
               <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-6 md:gap-4">
                 {/* Horizontal line for desktop */}
                 <div className="hidden md:block absolute left-8 right-8 top-1/2 -translate-y-1/2 h-[2px] bg-neutral-100 -z-0">
-                  <div 
-                    className="h-full bg-accent transition-all duration-500" 
+                  <div
+                    className="h-full bg-accent transition-all duration-500"
                     style={{ width: `${Math.max(0, (currentStatusIndex / (statusSteps.length - 1)) * 100)}%` }}
                   />
                 </div>
@@ -213,11 +213,10 @@ export const OrderDetails: React.FC = () => {
                   const isActive = idx === currentStatusIndex;
                   return (
                     <div key={idx} className="flex md:flex-col items-center gap-4 md:gap-2 z-10 w-full md:w-1/4">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center border font-bold text-xs shadow-sm transition-all duration-300 ${
-                        isCompleted 
-                          ? 'bg-accent text-[#121212] border-accent scale-110' 
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center border font-bold text-xs shadow-sm transition-all duration-300 ${isCompleted
+                          ? 'bg-accent text-[#121212] border-accent scale-110'
                           : 'bg-background text-neutral-400 border-border-light'
-                      }`}>
+                        }`}>
                         {isCompleted ? '✓' : idx + 1}
                       </div>
                       <div className="text-left md:text-center">
@@ -257,22 +256,22 @@ export const OrderDetails: React.FC = () => {
             {/* Left Column: Purchased Items list */}
             <div className="lg:col-span-8 space-y-4">
               <h2 className="font-display text-[18px] font-semibold mb-4">Items Ordered ({itemsCount})</h2>
-              
+
               <div className="border border-border-light rounded-xl overflow-hidden divide-y divide-border-light bg-background-alt">
                 {order.items.map((item) => {
                   const productDetails = item.product;
                   const itemTotal = item.price * item.quantity;
                   const productUrl = productDetails ? `/collections/${productDetails._id}` : null;
-                  
+
                   return (
                     <div key={item._id} className="p-5 flex gap-4 md:gap-6 items-center hover:bg-neutral-50/40 transition-colors duration-200">
                       {/* Product Image */}
                       <div className="w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden bg-neutral-100 flex-shrink-0 border border-border-light/60">
                         {productDetails?.image ? (
-                          <img 
-                            src={productDetails.image} 
-                            alt={item.title} 
-                            className="w-full h-full object-cover" 
+                          <img
+                            src={productDetails.image}
+                            alt={item.title}
+                            className="w-full h-full object-cover"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-xl text-neutral-400 shadow-inner">
@@ -330,7 +329,7 @@ export const OrderDetails: React.FC = () => {
                       {order.paymentStatus || 'Paid'}
                     </span>
                   </div>
-                  
+
                   <div className="border-t border-border-light/60 pt-3 mt-4 space-y-2">
                     <div className="flex justify-between text-xs text-neutral-400">
                       <span>Subtotal</span>
@@ -347,8 +346,8 @@ export const OrderDetails: React.FC = () => {
                   </div>
 
                   {order.status === 'Pending' && (
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={() => setIsCancelModalOpen(true)}
                       className="w-full mt-5 border-red-200 hover:bg-red-50 hover:text-red-600 text-red-500 hover:border-red-600 py-2.5 text-xs font-semibold uppercase tracking-wider"
                     >
@@ -387,3 +386,5 @@ export const OrderDetails: React.FC = () => {
     </div>
   );
 };
+
+
