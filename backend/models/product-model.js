@@ -9,7 +9,6 @@ const productSchema = mongoose.Schema({
     image: String
 })
 
-const productModel = mongoose.model("product", productSchema);
-mongoose.model("Product", productSchema);
+const productModel = mongoose.model("Product", productSchema);
 
 module.exports = productModel;
