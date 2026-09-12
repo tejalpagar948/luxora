@@ -3,6 +3,8 @@ const userModel = require("../models/user-model");
 const productModel = require("../models/product-model");
 const orderModel = require("../models/order-model");
 const { sendOrderConfirmationEmail } = require("../services/email-service");
+const { executeTransaction } = require("../utils/transaction");
+
 
 module.exports.getCart = async (req, res) => {
     try {
@@ -159,107 +161,106 @@ module.exports.checkoutCart = async (req, res) => {
     }
 
     try {
-        const user = await userModel.findOne({ email: req.user.email });
+        const result = await executeTransaction(async (session) => {
+            const user = await userModel.findOne({ email: req.user.email }).session(session);
 
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: "User not found"
-            });
-        }
-
-        if (user.isAdmin) {
-            return res.status(403).json({
-                success: false,
-                message: "Administrators are not allowed to place orders."
-            });
-        }
-
-        const status = paymentMethod === "cod"
-            ? "Pending"
-            : "Paid & Processing";
-
-        const paymentStatus = paymentMethod === "cod"
-            ? "Pending"
-            : "Paid";
-
-        // Check latest stock in DB for all items first
-        for (const item of items) {
-            const productId = item.product._id || item.product;
-            const dbProduct = await productModel.findById(productId);
-            if (!dbProduct) {
-                return res.status(404).json({
-                    success: false,
-                    message: `Product '${item.product?.title || "Unknown"}' not found`
-                });
+            if (!user) {
+                throw { status: 404, message: "User not found" };
             }
-            if (item.quantity > dbProduct.stock) {
-                return res.status(409).json({
-                    success: false,
-                    message: `Item '${dbProduct.title}' is no longer available in the requested quantity. (Only ${dbProduct.stock} left in stock)`
-                });
+
+            if (user.isAdmin) {
+                throw { status: 403, message: "Administrators are not allowed to place orders." };
             }
-        }
 
-        // Decrement stock for all items
-        for (const item of items) {
-            const productId = item.product._id || item.product;
-            await productModel.findByIdAndUpdate(productId, {
-                $inc: { stock: -item.quantity }
-            });
-        }
+            const status = paymentMethod === "cod" ? "Pending" : "Paid & Processing";
+            const paymentStatus = paymentMethod === "cod" ? "Pending" : "Paid";
 
-        // Create order
-        const newOrder = await orderModel.create({
-            user: user._id,
-            items: items.map(item => ({
-                product: item.product._id,
-                title: item.product.title,
-                price: item.product.price,
-                quantity: item.quantity
-            })),
-            totalAmount: Number(totalAmount),
-            paymentMethod: paymentMethod || "card",
-            shippingAddress,
-            status,
-            paymentStatus,
-            createdAt: new Date()
+            // Check latest stock in DB for all items first
+            for (const item of items) {
+                const productId = item.product._id || item.product;
+                const dbProduct = await productModel.findById(productId).session(session);
+                if (!dbProduct) {
+                    throw { status: 404, message: `Product '${item.product?.title || "Unknown"}' not found` };
+                }
+                if (item.quantity > dbProduct.stock) {
+                    throw {
+                        status: 409,
+                        message: `Item '${dbProduct.title}' is no longer available in the requested quantity. (Only ${dbProduct.stock} left in stock)`
+                    };
+                }
+            }
+
+            // Decrement stock for all items
+            for (const item of items) {
+                const productId = item.product._id || item.product;
+                await productModel.findByIdAndUpdate(
+                    productId,
+                    { $inc: { stock: -item.quantity } },
+                    { session }
+                );
+            }
+
+            // Create order
+            const newOrders = await orderModel.create(
+                [
+                    {
+                        user: user._id,
+                        items: items.map(item => ({
+                            product: item.product._id,
+                            title: item.product.title,
+                            price: item.product.price,
+                            quantity: item.quantity
+                        })),
+                        totalAmount: Number(totalAmount),
+                        paymentMethod: paymentMethod || "card",
+                        shippingAddress,
+                        status,
+                        paymentStatus,
+                        createdAt: new Date()
+                    }
+                ],
+                { session }
+            );
+            const newOrder = newOrders[0];
+
+            // Remove the checked out items from the cart
+            const checkedOutProductIds = items.map(
+                item => item.product._id.toString()
+            );
+
+            user.cart = user.cart.filter(
+                item =>
+                    item.product &&
+                    !checkedOutProductIds.includes(
+                        item.product.toString()
+                    )
+            );
+
+            await user.save({ session });
+            return newOrder;
         });
 
         // Send order confirmation email
         try {
-            await sendOrderConfirmationEmail(newOrder, user.email);
+            await sendOrderConfirmationEmail(result, req.user.email);
         } catch (emailError) {
-            console.error(
-                "Order confirmation email failed:",
-                emailError
-            );
+            console.error("Order confirmation email failed:", emailError);
         }
-
-        // Remove the checked out items from the cart
-        const checkedOutProductIds = items.map(
-            item => item.product._id.toString()
-        );
-
-        user.cart = user.cart.filter(
-            item =>
-                item.product &&
-                !checkedOutProductIds.includes(
-                    item.product.toString()
-                )
-        );
-
-        await user.save();
 
         return res.status(200).json({
             success: true,
             message: "Order placed successfully",
-            order: newOrder
+            order: result
         });
 
     } catch (error) {
+        if (error.status && error.message) {
+            return res.status(error.status).json({
+                success: false,
+                message: error.message
+            });
+        }
         console.error("Error checking out:", error);
-
         return res.status(500).json({
             success: false,
             message: "Internal server error"
