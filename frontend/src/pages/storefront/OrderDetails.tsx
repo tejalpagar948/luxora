@@ -3,7 +3,6 @@ import { useParams, Link } from 'react-router-dom';
 import { Container } from '../../components/layout/Container';
 import { Button } from '../../components/ui/Button';
 import { getUserOrderDetails } from '../../../services/orderService';
-import { toast } from 'react-hot-toast';
 import { useCancelOrder } from '../../hooks/useCancelOrder';
 import { CancelOrderModal } from '../../components/order/CancelOrderModal';
 
@@ -53,8 +52,6 @@ export const OrderDetails: React.FC = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [orders, setOrders] = useState<any[]>([]); // unused state optionally declared
-  const [ordersLoading, setOrdersLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const { cancelOrder, loading: cancelLoading } = useCancelOrder();
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
